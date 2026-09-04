@@ -1,0 +1,35 @@
+﻿# Build directories
+build/
+build_native/
+gui/build/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Qt generated files
+*.moc
+moc_*.cpp
+qrc_*.cpp
+*.qmake.stash
+
+# Compiled binaries
+*.exe
+*.dll
+*.o
+*.obj
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Secrets
+.env
+
+lost_found.db
+uploads/

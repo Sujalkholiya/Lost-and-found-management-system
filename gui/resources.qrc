@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/assets">
+        <file>resources/images/hero_campus.png</file>
+        <file>resources/images/badge_lost.png</file>
+        <file>resources/images/badge_found.png</file>
+        <file>resources/images/empty_search.png</file>
+        <file>resources/images/campus_map.png</file>
+    </qresource>
+</RCC>

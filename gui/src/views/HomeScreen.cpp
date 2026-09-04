@@ -1,0 +1,328 @@
+#include "HomeScreen.h"
+#include "../auth/AuthManager.h"
+#include "../components/ItemCardWidget.h"
+#include "../components/EmptyStateWidget.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QScrollArea>
+#include <QFrame>
+#include <QMessageBox>
+
+HomeScreen::HomeScreen(ApiClient *apiClient, QWidget *parent)
+    : QWidget(parent)
+    , m_apiClient(apiClient)
+    , m_authNavBtn(nullptr)
+    , m_totalCard(nullptr)
+    , m_lostCard(nullptr)
+    , m_foundCard(nullptr)
+    , m_recentContainer(nullptr)
+    , m_recentGrid(nullptr)
+{
+    setupUI();
+    updateAuthControls();
+
+    connect(&AuthManager::instance(), &AuthManager::authStateChanged, this, &HomeScreen::updateAuthControls);
+}
+
+void HomeScreen::setupUI()
+{
+    QVBoxLayout *rootLayout = new QVBoxLayout(this);
+    rootLayout->setContentsMargins(0, 0, 0, 0);
+
+    QScrollArea *scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setStyleSheet("background-color: #F8FAFC;");
+
+    QWidget *contentWidget = new QWidget(scrollArea);
+    QVBoxLayout *layout = new QVBoxLayout(contentWidget);
+    layout->setContentsMargins(36, 32, 36, 36);
+    layout->setSpacing(28);
+
+    // 1. APPLICATION BRANDING & TOP BANNER
+    QHBoxLayout *brandHeader = new QHBoxLayout();
+    QLabel *brandIcon = new QLabel("🎓", contentWidget);
+    brandIcon->setStyleSheet("font-size: 28px; background: transparent;");
+    
+    QVBoxLayout *brandTitles = new QVBoxLayout();
+    brandTitles->setSpacing(2);
+    
+    QLabel *systemTitle = new QLabel("Lost & Found Management System", contentWidget);
+    systemTitle->setStyleSheet("font-size: 20px; font-weight: 800; color: #0F172A; background: transparent;");
+    
+    QLabel *campusSub = new QLabel("Official University Property Recovery Network", contentWidget);
+    campusSub->setStyleSheet("font-size: 13px; color: #64748B; background: transparent;");
+
+    brandTitles->addWidget(systemTitle);
+    brandTitles->addWidget(campusSub);
+    brandHeader->addWidget(brandIcon);
+    brandHeader->addLayout(brandTitles);
+    brandHeader->addStretch();
+
+    layout->addLayout(brandHeader);
+
+    // 2. HERO / WELCOME SECTION
+    QFrame *heroBanner = new QFrame(contentWidget);
+    heroBanner->setObjectName("heroBanner");
+    heroBanner->setStyleSheet(
+        "QFrame#heroBanner {"
+        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4338CA, stop:0.6 #4F46E5, stop:1 #312E81);"
+        "   border-radius: 16px;"
+        "   padding: 32px;"
+        "}"
+    );
+
+    QVBoxLayout *heroLayout = new QVBoxLayout(heroBanner);
+    heroLayout->setSpacing(14);
+
+    QLabel *heroTag = new QLabel("CAMPUS RECOVERY NETWORK", heroBanner);
+    heroTag->setStyleSheet("color: #C7D2FE; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; background: transparent;");
+
+    QLabel *heroTitle = new QLabel("Lost Something? Found Something? We Can Help.", heroBanner);
+    heroTitle->setStyleSheet("color: #FFFFFF; font-size: 26px; font-weight: 800; line-height: 125%; background: transparent;");
+    heroTitle->setWordWrap(true);
+
+    QLabel *heroSub = new QLabel(
+        "A centralized platform for students, faculty, and staff to report lost personal items, "
+        "search recent campus discoveries, and safely return valuables to their rightful owners.",
+        heroBanner
+    );
+    heroSub->setStyleSheet("color: #E0E7FF; font-size: 14px; line-height: 140%; background: transparent;");
+    heroSub->setWordWrap(true);
+
+    // 3. NAVIGATION BUTTONS
+    QHBoxLayout *navButtonsLayout = new QHBoxLayout();
+    navButtonsLayout->setSpacing(12);
+
+    QPushButton *browseBtn = new QPushButton("🔍 Browse Items", heroBanner);
+    browseBtn->setCursor(Qt::PointingHandCursor);
+    browseBtn->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #FFFFFF;"
+        "   color: #4338CA;"
+        "   font-weight: 700;"
+        "   font-size: 13px;"
+        "   padding: 10px 18px;"
+        "   border-radius: 8px;"
+        "   border: none;"
+        "}"
+        "QPushButton:hover { background-color: #F8FAFC; }"
+    );
+    connect(browseBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(1); }); // 1 = Browse
+
+    QPushButton *reportLostBtn = new QPushButton("🔴 Report Lost Item", heroBanner);
+    reportLostBtn->setCursor(Qt::PointingHandCursor);
+    reportLostBtn->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #E11D48;"
+        "   color: #FFFFFF;"
+        "   font-weight: 700;"
+        "   font-size: 13px;"
+        "   padding: 10px 18px;"
+        "   border-radius: 8px;"
+        "   border: none;"
+        "}"
+        "QPushButton:hover { background-color: #BE123C; }"
+    );
+    connect(reportLostBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(2); }); // 2 = Report
+
+    QPushButton *reportFoundBtn = new QPushButton("🟢 Report Found Item", heroBanner);
+    reportFoundBtn->setCursor(Qt::PointingHandCursor);
+    reportFoundBtn->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #059669;"
+        "   color: #FFFFFF;"
+        "   font-weight: 700;"
+        "   font-size: 13px;"
+        "   padding: 10px 18px;"
+        "   border-radius: 8px;"
+        "   border: none;"
+        "}"
+        "QPushButton:hover { background-color: #047857; }"
+    );
+    connect(reportFoundBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(2); }); // 2 = Report
+
+    m_authNavBtn = new QPushButton("🔑 Sign In", heroBanner);
+    m_authNavBtn->setCursor(Qt::PointingHandCursor);
+    m_authNavBtn->setStyleSheet(
+        "QPushButton {"
+        "   background-color: rgba(255, 255, 255, 0.15);"
+        "   color: #FFFFFF;"
+        "   font-weight: 700;"
+        "   font-size: 13px;"
+        "   padding: 10px 18px;"
+        "   border-radius: 8px;"
+        "   border: 1px solid rgba(255, 255, 255, 0.3);"
+        "}"
+        "QPushButton:hover { background-color: rgba(255, 255, 255, 0.25); }"
+    );
+    connect(m_authNavBtn, &QPushButton::clicked, this, [this]() {
+        if (AuthManager::instance().isLoggedIn()) {
+            emit navigateTo(5); // 5 = Dashboard
+        } else {
+            emit navigateTo(3); // 3 = Login
+        }
+    });
+
+    navButtonsLayout->addWidget(browseBtn);
+    navButtonsLayout->addWidget(reportLostBtn);
+    navButtonsLayout->addWidget(reportFoundBtn);
+    navButtonsLayout->addWidget(m_authNavBtn);
+    navButtonsLayout->addStretch();
+
+    heroLayout->addWidget(heroTag);
+    heroLayout->addWidget(heroTitle);
+    heroLayout->addWidget(heroSub);
+    heroLayout->addSpacing(8);
+    heroLayout->addLayout(navButtonsLayout);
+    layout->addWidget(heroBanner);
+
+    // 4. REAL STATISTICS KPI SECTION
+    m_totalCard = new StatCardWidget("Total Listed Items", "📦", StatCardWidget::Indigo, contentWidget);
+    m_lostCard = new StatCardWidget("Active Lost Items", "🔴", StatCardWidget::Rose, contentWidget);
+    m_foundCard = new StatCardWidget("Recovered / Found", "🟢", StatCardWidget::Emerald, contentWidget);
+
+    QHBoxLayout *statsLayout = new QHBoxLayout();
+    statsLayout->setSpacing(16);
+    statsLayout->addWidget(m_totalCard);
+    statsLayout->addWidget(m_lostCard);
+    statsLayout->addWidget(m_foundCard);
+    layout->addLayout(statsLayout);
+
+    // 5. RECENT ITEMS SECTION
+    QHBoxLayout *recentHeader = new QHBoxLayout();
+    QLabel *recentTitle = new QLabel("Recent Item Activity", contentWidget);
+    recentTitle->setStyleSheet("font-size: 18px; font-weight: 700; color: #0F172A; background: transparent;");
+
+    QPushButton *viewAllBtn = new QPushButton("View All Items →", contentWidget);
+    viewAllBtn->setCursor(Qt::PointingHandCursor);
+    viewAllBtn->setStyleSheet("background: transparent; color: #4F46E5; font-size: 13px; font-weight: 700; border: none;");
+    connect(viewAllBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(1); }); // 1 = Browse
+
+    recentHeader->addWidget(recentTitle);
+    recentHeader->addStretch();
+    recentHeader->addWidget(viewAllBtn);
+    layout->addLayout(recentHeader);
+
+    m_recentContainer = new QWidget(contentWidget);
+    m_recentGrid = new QGridLayout(m_recentContainer);
+    m_recentGrid->setSpacing(16);
+    m_recentGrid->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_recentContainer);
+
+    scrollArea->setWidget(contentWidget);
+    rootLayout->addWidget(scrollArea);
+}
+
+void HomeScreen::updateAuthControls()
+{
+    if (!m_authNavBtn) return;
+    if (AuthManager::instance().isLoggedIn()) {
+        m_authNavBtn->setText("👤 My Dashboard");
+    } else {
+        m_authNavBtn->setText("🔑 Sign In");
+    }
+}
+
+void HomeScreen::refreshData()
+{
+    updateAuthControls();
+
+    if (!m_apiClient) return;
+
+    // Fetch real live items from GET /api/items
+    m_apiClient->getAllItems(
+        [this](const QVector<Item> &items, int count) {
+            Q_UNUSED(count);
+            updateItems(items);
+        },
+        [this](int statusCode, const QString &errorMessage) {
+            Q_UNUSED(statusCode);
+            Q_UNUSED(errorMessage);
+        }
+    );
+}
+
+void HomeScreen::updateItems(const QVector<Item> &items)
+{
+    if (!m_totalCard || !m_lostCard || !m_foundCard || !m_recentGrid || !m_recentContainer) return;
+
+    // Real calculation of statistics from API response
+    int total = items.size();
+    int lost = 0;
+    int found = 0;
+
+    for (const Item &item : items) {
+        if (item.isLost()) {
+            lost++;
+        } else if (item.isFound()) {
+            found++;
+        }
+    }
+
+    m_totalCard->setValue(total);
+    m_lostCard->setValue(lost);
+    m_foundCard->setValue(found);
+
+    // Clear previous items in grid
+    QLayoutItem *child;
+    while ((child = m_recentGrid->takeAt(0)) != nullptr) {
+        if (child->widget()) {
+            delete child->widget();
+        }
+        delete child;
+    }
+
+    int displayCount = qMin(items.size(), 6);
+    for (int i = 0; i < displayCount; ++i) {
+        const Item &item = items[i];
+        ItemCardWidget *card = new ItemCardWidget(item, m_recentContainer);
+        connect(card, &ItemCardWidget::viewDetailsRequested, this, &HomeScreen::viewItemDetails);
+        connect(card, &ItemCardWidget::deleteItemRequested, this, &HomeScreen::confirmDeleteItem);
+        m_recentGrid->addWidget(card, i / 2, i % 2);
+    }
+
+    if (displayCount == 0) {
+        EmptyStateWidget *empty = new EmptyStateWidget(
+            "📦",
+            "No Items Reported Yet",
+            "Be the first on campus to report a lost or found item.",
+            "+ Report an Item",
+            m_recentContainer
+        );
+        connect(empty, &EmptyStateWidget::actionClicked, this, [this]() { emit navigateTo(2); });
+        m_recentGrid->addWidget(empty, 0, 0, 1, 2);
+    }
+}
+
+void HomeScreen::confirmDeleteItem(const Item &item)
+{
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "Delete Item Report",
+        QString("Are you sure you want to delete \"%1\"?\nThis cannot be undone.").arg(item.title),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No
+    );
+
+    if (reply != QMessageBox::Yes) {
+        return;
+    }
+
+    m_apiClient->deleteItem(
+        item.id,
+        [this, item](const QJsonObject &response) {
+            Q_UNUSED(response);
+            emit showToast(QString("Item \"%1\" deleted successfully.").arg(item.title), ToastType::Success);
+            refreshData();
+        },
+        [this](int statusCode, const QString &errorMessage) {
+            Q_UNUSED(statusCode);
+            QMessageBox::critical(
+                this,
+                "Delete Failed",
+                QString("Unable to delete item: %1").arg(errorMessage)
+            );
+        }
+    );
+}
