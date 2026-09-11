@@ -39,6 +39,7 @@ set(SOURCES
     src/views/AdminScreen.cpp
     src/views/AccessDeniedScreen.cpp
     src/views/MainWindow.cpp
+    resources.qrc
 )
 
 set(HEADERS

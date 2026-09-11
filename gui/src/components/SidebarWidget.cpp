@@ -56,11 +56,12 @@ void SidebarWidget::setupUI()
     brandLayout->addStretch();
     m_layout->addWidget(brandWidget);
 
-    // Divider
-    QFrame *line = new QFrame(this);
-    line->setFrameShape(QFrame::HLine);
-    line->setStyleSheet("color: #1E293B; margin-bottom: 8px;");
-    m_layout->addWidget(line);
+    // Section Category Label: NAVIGATION (as in reference design)
+    QLabel *navCategoryLabel = new QLabel("NAVIGATION", this);
+    navCategoryLabel->setStyleSheet(
+        "font-size: 10px; font-weight: 800; color: #64748B; letter-spacing: 1.5px; background: transparent; padding-left: 6px; margin-top: 4px; margin-bottom: 2px;"
+    );
+    m_layout->addWidget(navCategoryLabel);
 
     // Navigation Buttons
     // Index 0: Home
@@ -69,8 +70,8 @@ void SidebarWidget::setupUI()
     m_layout->addWidget(createNavButton("Browse Items", "🔍", 1));
     // Index 2: Report Item
     m_layout->addWidget(createNavButton("Report Item", "➕", 2));
-    // Index 5: User Dashboard
-    m_dashboardBtn = createNavButton("My Dashboard", "👤", 5);
+    // Index 5: Dashboard
+    m_dashboardBtn = createNavButton("Dashboard", "📊", 5);
     m_layout->addWidget(m_dashboardBtn);
 
     // Index 6: Admin Panel
@@ -87,12 +88,19 @@ void SidebarWidget::setupUI()
         "   background-color: #1E293B;"
         "   border: 1px solid #334155;"
         "   border-radius: 10px;"
-        "   padding: 12px;"
+        "   padding: 10px;"
         "}"
     );
-    QVBoxLayout *userLayout = new QVBoxLayout(userFrame);
-    userLayout->setContentsMargins(8, 8, 8, 8);
-    userLayout->setSpacing(4);
+    QHBoxLayout *userOuterLayout = new QHBoxLayout(userFrame);
+    userOuterLayout->setContentsMargins(8, 6, 8, 6);
+    userOuterLayout->setSpacing(10);
+
+    QLabel *userIcon = new QLabel("👤", userFrame);
+    userIcon->setStyleSheet("font-size: 20px; background: transparent; color: #818CF8;");
+
+    QVBoxLayout *userLayout = new QVBoxLayout();
+    userLayout->setContentsMargins(0, 0, 0, 0);
+    userLayout->setSpacing(2);
 
     m_userNameLabel = new QLabel("Guest Visitor", userFrame);
     m_userNameLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #F8FAFC; background: transparent;");
@@ -102,14 +110,18 @@ void SidebarWidget::setupUI()
 
     userLayout->addWidget(m_userNameLabel);
     userLayout->addWidget(m_userBadgeLabel);
+    userOuterLayout->addWidget(userIcon);
+    userOuterLayout->addLayout(userLayout);
+    userOuterLayout->addStretch();
+
     m_layout->addWidget(userFrame);
 
     // Auth Action Buttons
-    m_loginBtn = new QPushButton("🔑 Sign In", this);
+    m_loginBtn = new QPushButton("Sign In", this);
     m_loginBtn->setCursor(Qt::PointingHandCursor);
     m_loginBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4F46E5;"
+        "   background-color: #6366F1;"
         "   color: #FFFFFF;"
         "   border-radius: 8px;"
         "   padding: 10px;"
@@ -117,12 +129,12 @@ void SidebarWidget::setupUI()
         "   font-weight: 700;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4338CA; }"
+        "QPushButton:hover { background-color: #4F46E5; }"
     );
     connect(m_loginBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(3); }); // 3 = Login
     m_layout->addWidget(m_loginBtn);
 
-    m_logoutBtn = new QPushButton("🚪 Log Out", this);
+    m_logoutBtn = new QPushButton("Log Out", this);
     m_logoutBtn->setCursor(Qt::PointingHandCursor);
     m_logoutBtn->setStyleSheet(
         "QPushButton {"

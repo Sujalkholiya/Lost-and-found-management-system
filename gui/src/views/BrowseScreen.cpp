@@ -43,10 +43,10 @@ void BrowseScreen::setupUI()
     titleLayout->setSpacing(2);
 
     QLabel *pageTitle = new QLabel("Browse Campus Items", this);
-    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A;");
+    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A; background: transparent;");
 
     QLabel *pageSubtitle = new QLabel("Search and filter all reported lost and found belongings across the university.", this);
-    pageSubtitle->setStyleSheet("font-size: 13px; color: #64748B; font-weight: 500;");
+    pageSubtitle->setStyleSheet("font-size: 13px; color: #64748B; font-weight: 500; background: transparent;");
 
     titleLayout->addWidget(pageTitle);
     titleLayout->addWidget(pageSubtitle);
@@ -57,15 +57,15 @@ void BrowseScreen::setupUI()
     reportNewBtn->setCursor(Qt::PointingHandCursor);
     reportNewBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4F46E5;"
+        "   background-color: #6366F1;"
         "   color: #FFFFFF;"
         "   font-weight: 700;"
         "   font-size: 13px;"
-        "   padding: 10px 18px;"
+        "   padding: 9px 18px;"
         "   border-radius: 8px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4338CA; }"
+        "QPushButton:hover { background-color: #4F46E5; }"
     );
     connect(reportNewBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(2); }); // 2 = Report
     headerLayout->addWidget(reportNewBtn);
@@ -76,9 +76,9 @@ void BrowseScreen::setupUI()
     QFrame *filterCard = new QFrame(this);
     filterCard->setStyleSheet(
         "QFrame#filterCard {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.94);"
         "   border: 1px solid #E2E8F0;"
-        "   border-radius: 12px;"
+        "   border-radius: 14px;"
         "   padding: 4px;"
         "}"
     );
@@ -260,7 +260,7 @@ void BrowseScreen::setupUI()
 
     // 5. Item Count Header
     m_countLabel = new QLabel("Showing 0 items", this);
-    m_countLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #64748B;");
+    m_countLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #64748B; background: transparent;");
     rootLayout->addWidget(m_countLabel);
 
     // 6. Scroll Area with Card Grid
@@ -270,6 +270,7 @@ void BrowseScreen::setupUI()
     scrollArea->setStyleSheet("background-color: transparent;");
 
     m_gridContainer = new QWidget(scrollArea);
+    m_gridContainer->setStyleSheet("background: transparent;");
     m_cardsGrid = new QGridLayout(m_gridContainer);
     m_cardsGrid->setSpacing(14);
     m_cardsGrid->setContentsMargins(0, 0, 0, 0);

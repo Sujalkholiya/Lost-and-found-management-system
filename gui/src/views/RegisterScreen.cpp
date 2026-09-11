@@ -25,9 +25,10 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     QScrollArea *scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
-    scrollArea->setStyleSheet("background-color: #F8FAFC;");
+    scrollArea->setStyleSheet("background-color: transparent;");
 
     QWidget *scrollContent = new QWidget(scrollArea);
+    scrollContent->setStyleSheet("background: transparent;");
     QVBoxLayout *contentLayout = new QVBoxLayout(scrollContent);
     contentLayout->setAlignment(Qt::AlignCenter);
     contentLayout->setContentsMargins(24, 32, 24, 32);
@@ -36,9 +37,9 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     card->setFixedWidth(460);
     card->setStyleSheet(
         "QFrame#registerCard {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.95);"
         "   border: 1px solid #E2E8F0;"
-        "   border-radius: 16px;"
+        "   border-radius: 18px;"
         "   padding: 32px;"
         "}"
     );

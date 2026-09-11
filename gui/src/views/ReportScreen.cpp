@@ -62,9 +62,10 @@ void ReportScreen::setupUI()
     QScrollArea *scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
-    scrollArea->setStyleSheet("background-color: #F8FAFC;");
+    scrollArea->setStyleSheet("background-color: transparent;");
 
     QWidget *contentWidget = new QWidget(scrollArea);
+    contentWidget->setStyleSheet("background: transparent;");
     QVBoxLayout *layout = new QVBoxLayout(contentWidget);
     layout->setContentsMargins(36, 28, 36, 36);
     layout->setSpacing(20);
@@ -75,10 +76,10 @@ void ReportScreen::setupUI()
     titleLayout->setSpacing(2);
 
     QLabel *pageTitle = new QLabel("Report Lost or Found Item", contentWidget);
-    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A;");
+    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A; background: transparent;");
 
     QLabel *pageSubtitle = new QLabel("Submit a detailed report to help return items to their rightful owners on campus.", contentWidget);
-    pageSubtitle->setStyleSheet("font-size: 13px; color: #64748B;");
+    pageSubtitle->setStyleSheet("font-size: 13px; color: #64748B; background: transparent;");
 
     titleLayout->addWidget(pageTitle);
     titleLayout->addWidget(pageSubtitle);
@@ -88,9 +89,9 @@ void ReportScreen::setupUI()
     m_authRequiredCard = new QFrame(contentWidget);
     m_authRequiredCard->setStyleSheet(
         "QFrame {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.95);"
         "   border: 1px solid #E2E8F0;"
-        "   border-radius: 12px;"
+        "   border-radius: 16px;"
         "   padding: 40px;"
         "}"
     );
@@ -165,9 +166,9 @@ void ReportScreen::setupUI()
     m_formCard = new QFrame(contentWidget);
     m_formCard->setStyleSheet(
         "QFrame {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.95);"
         "   border: 1px solid #E2E8F0;"
-        "   border-radius: 12px;"
+        "   border-radius: 16px;"
         "   padding: 28px;"
         "}"
     );

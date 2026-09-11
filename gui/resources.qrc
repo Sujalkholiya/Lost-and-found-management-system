@@ -5,5 +5,6 @@
         <file>resources/images/badge_found.png</file>
         <file>resources/images/empty_search.png</file>
         <file>resources/images/campus_map.png</file>
+        <file>resources/images/campus-background.png</file>
     </qresource>
 </RCC>

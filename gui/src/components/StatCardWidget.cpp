@@ -29,36 +29,39 @@ StatCardWidget::StatCardWidget(const QString& title, const QString& icon, ColorT
         iconTextColor = "#4F46E5";
     }
 
-    m_iconLabel->setFixedSize(44, 44);
+    m_iconLabel->setFixedSize(40, 40);
     m_iconLabel->setAlignment(Qt::AlignCenter);
     m_iconLabel->setStyleSheet(QString(
-        "background-color: %1; color: %2; font-size: 20px; font-weight: bold; border-radius: 12px;"
+        "background-color: %1; color: %2; font-size: 18px; font-weight: bold; border-radius: 10px;"
     ).arg(iconBgColor, iconTextColor));
 
-    m_valueLabel->setStyleSheet("font-size: 28px; font-weight: 800; color: #0F172A;");
-    m_titleLabel->setStyleSheet("font-size: 13px; font-weight: 600; color: #64748B;");
+    m_valueLabel->setStyleSheet("font-size: 22px; font-weight: 800; color: #0F172A; background: transparent;");
+    m_titleLabel->setStyleSheet("font-size: 11px; font-weight: 600; color: #64748B; background: transparent;");
 
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(22, 20, 22, 20);
-    mainLayout->setSpacing(8);
+    QHBoxLayout* mainLayout = new QHBoxLayout(this);
+    mainLayout->setContentsMargins(16, 14, 16, 14);
+    mainLayout->setSpacing(12);
 
-    QHBoxLayout* topRow = new QHBoxLayout();
-    topRow->addWidget(m_iconLabel);
-    topRow->addStretch();
+    mainLayout->addWidget(m_iconLabel);
 
-    mainLayout->addLayout(topRow);
-    mainLayout->addWidget(m_valueLabel);
-    mainLayout->addWidget(m_titleLabel);
+    QVBoxLayout* textLayout = new QVBoxLayout();
+    textLayout->setSpacing(2);
+    textLayout->setContentsMargins(0, 0, 0, 0);
+    textLayout->addWidget(m_titleLabel);
+    textLayout->addWidget(m_valueLabel);
+
+    mainLayout->addLayout(textLayout);
+    mainLayout->addStretch();
 
     setStyleSheet(
         "StatCardWidget#statCard { "
-        "  background-color: #FFFFFF; "
+        "  background-color: rgba(255, 255, 255, 0.92); "
         "  border: 1px solid #E2E8F0; "
-        "  border-radius: 16px; "
+        "  border-radius: 14px; "
         "}"
         "StatCardWidget#statCard:hover { "
         "  border: 1.5px solid #CBD5E1; "
-        "  background-color: #FAFAFD; "
+        "  background-color: #FFFFFF; "
         "}"
     );
 }

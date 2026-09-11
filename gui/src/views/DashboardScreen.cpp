@@ -30,7 +30,7 @@ DashboardScreen::DashboardScreen(ApiClient *apiClient, QWidget *parent)
     QFrame *profileCard = new QFrame(this);
     profileCard->setStyleSheet(
         "QFrame {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.95);"
         "   border: 1px solid #E2E8F0;"
         "   border-radius: 16px;"
         "   padding: 24px;"
@@ -167,8 +167,8 @@ DashboardScreen::DashboardScreen(ApiClient *apiClient, QWidget *parent)
     // 3. Section Header
     QHBoxLayout *secHeader = new QHBoxLayout();
     QLabel *sectionTitle = new QLabel("My Reported Items", this);
-    sectionTitle->setStyleSheet("font-size: 18px; font-weight: 800; color: #0F172A;");
-    m_itemCountLabel->setStyleSheet("font-size: 13px; font-weight: 600; color: #64748B;");
+    sectionTitle->setStyleSheet("font-size: 18px; font-weight: 800; color: #0F172A; background: transparent;");
+    m_itemCountLabel->setStyleSheet("font-size: 13px; font-weight: 600; color: #64748B; background: transparent;");
     secHeader->addWidget(sectionTitle);
     secHeader->addStretch();
     secHeader->addWidget(m_itemCountLabel);
@@ -180,6 +180,7 @@ DashboardScreen::DashboardScreen(ApiClient *apiClient, QWidget *parent)
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setStyleSheet("background-color: transparent;");
 
+    m_itemsContainer->setStyleSheet("background: transparent;");
     m_itemsGrid->setSpacing(16);
     m_itemsGrid->setContentsMargins(0, 0, 0, 0);
 

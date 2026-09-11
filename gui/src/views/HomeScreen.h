@@ -37,6 +37,7 @@ private:
     StatCardWidget *m_totalCard;
     StatCardWidget *m_lostCard;
     StatCardWidget *m_foundCard;
+    StatCardWidget *m_weekCard;
     QWidget *m_recentContainer;
     QGridLayout *m_recentGrid;
 };

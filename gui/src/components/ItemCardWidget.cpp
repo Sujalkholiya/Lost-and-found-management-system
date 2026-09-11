@@ -24,27 +24,27 @@ ItemCardWidget::ItemCardWidget(const Item &item, QWidget *parent)
 
     bool isLost = item.isLost();
 
-    // 1. Type Badge Styling
-    m_typeBadge->setText(isLost ? "🔴 LOST ITEM" : "🟢 FOUND ITEM");
+    // 1. Type Badge Styling (matching reference design pill badges)
+    m_typeBadge->setText(isLost ? "• LOST" : "• FOUND");
     m_typeBadge->setAlignment(Qt::AlignCenter);
     if (isLost) {
         m_typeBadge->setStyleSheet(
             "background-color: #FEF2F2;"
             "color: #DC2626;"
-            "font-size: 11px;"
-            "font-weight: 700;"
-            "padding: 3px 8px;"
-            "border-radius: 6px;"
+            "font-size: 10px;"
+            "font-weight: 800;"
+            "padding: 3px 10px;"
+            "border-radius: 10px;"
             "border: 1px solid #FECDD3;"
         );
     } else {
         m_typeBadge->setStyleSheet(
             "background-color: #ECFDF5;"
             "color: #059669;"
-            "font-size: 11px;"
-            "font-weight: 700;"
-            "padding: 3px 8px;"
-            "border-radius: 6px;"
+            "font-size: 10px;"
+            "font-weight: 800;"
+            "padding: 3px 10px;"
+            "border-radius: 10px;"
             "border: 1px solid #A7F3D0;"
         );
     }
@@ -199,19 +199,17 @@ ItemCardWidget::ItemCardWidget(const Item &item, QWidget *parent)
     mainLayout->addSpacing(2);
     mainLayout->addLayout(footer);
 
-    setStyleSheet(QString(
+    setStyleSheet(
         "ItemCardWidget#itemCard {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.94);"
         "   border: 1px solid #E2E8F0;"
-        "   border-radius: 12px;"
+        "   border-radius: 14px;"
         "}"
         "ItemCardWidget#itemCard:hover {"
-        "   border: 1.5px solid %1;"
-        "   background-color: #FAFAFD;"
+        "   border: 1.5px solid #6366F1;"
+        "   background-color: #FFFFFF;"
         "}"
-    ).arg(
-        isLost ? "#F87171" : "#34D399"
-    ));
+    );
 }
 
 void ItemCardWidget::mousePressEvent(QMouseEvent *event)

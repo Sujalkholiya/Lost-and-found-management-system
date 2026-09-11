@@ -3,6 +3,45 @@
 #include <QVBoxLayout>
 #include <QStatusBar>
 #include <QDebug>
+#include <QPainter>
+#include <QPaintEvent>
+
+// Custom content container that renders the campus background with a soft translucent overlay
+class CampusBackgroundArea : public QWidget
+{
+public:
+    explicit CampusBackgroundArea(QWidget *parent = nullptr)
+        : QWidget(parent)
+        , m_bgPixmap(":/assets/resources/images/campus-background.png")
+    {
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        Q_UNUSED(event);
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+        if (!m_bgPixmap.isNull()) {
+            QSize scaledSize = m_bgPixmap.size();
+            scaledSize.scale(size(), Qt::KeepAspectRatioByExpanding);
+
+            int x = (width() - scaledSize.width()) / 2;
+            int y = (height() - scaledSize.height()) / 2;
+
+            painter.drawPixmap(x, y, scaledSize.width(), scaledSize.height(), m_bgPixmap);
+        } else {
+            painter.fillRect(rect(), QColor("#F1F5F9"));
+        }
+
+        // Soft translucent neutral overlay over campus image for strong text contrast
+        painter.fillRect(rect(), QColor(248, 250, 252, 215));
+    }
+
+private:
+    QPixmap m_bgPixmap;
+};
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -67,7 +106,7 @@ void MainWindow::setupUI()
     rootLayout->addWidget(m_sidebarWidget);
 
     qDebug() << "[MainWindow] setupUI: Creating content area & layout...";
-    QWidget *contentArea = new QWidget(this);
+    CampusBackgroundArea *contentArea = new CampusBackgroundArea(this);
     QVBoxLayout *contentLayout = new QVBoxLayout(contentArea);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
@@ -78,7 +117,7 @@ void MainWindow::setupUI()
 
     qDebug() << "[MainWindow] setupUI: Creating QStackedWidget...";
     m_stackedWidget = new QStackedWidget(this);
-    m_stackedWidget->setStyleSheet("background-color: #F8FAFC;");
+    m_stackedWidget->setStyleSheet("background: transparent;");
 
     qDebug() << "[MainWindow] setupUI: Instantiating HomeScreen...";
     m_homeScreen = new HomeScreen(m_apiClient, this);

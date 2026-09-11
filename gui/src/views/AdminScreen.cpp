@@ -63,10 +63,10 @@ void AdminScreen::setupUI()
     titleLayout->setSpacing(2);
 
     QLabel *pageTitle = new QLabel("🛡️ Master Inventory Administration", this);
-    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A;");
+    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A; background: transparent;");
 
     QLabel *pageSub = new QLabel("Restricted administrative console for campus property tracking and audit.", this);
-    pageSub->setStyleSheet("font-size: 13px; color: #64748B;");
+    pageSub->setStyleSheet("font-size: 13px; color: #64748B; background: transparent;");
 
     titleLayout->addWidget(pageTitle);
     titleLayout->addWidget(pageSub);
@@ -230,9 +230,9 @@ void AdminScreen::setupUI()
     QFrame *tableCard = new QFrame(m_contentBox);
     tableCard->setStyleSheet(
         "QFrame {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.95);"
         "   border: 1px solid #E2E8F0;"
-        "   border-radius: 12px;"
+        "   border-radius: 16px;"
         "   padding: 20px;"
         "}"
     );

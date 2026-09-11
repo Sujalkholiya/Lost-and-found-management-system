@@ -18,9 +18,9 @@ void AccessDeniedScreen::setupUI()
     card->setFixedWidth(500);
     card->setStyleSheet(
         "QFrame {"
-        "   background-color: #FFFFFF;"
+        "   background-color: rgba(255, 255, 255, 0.95);"
         "   border: 1px solid #E2E8F0;"
-        "   border-radius: 12px;"
+        "   border-radius: 16px;"
         "   padding: 36px;"
         "}"
     );
