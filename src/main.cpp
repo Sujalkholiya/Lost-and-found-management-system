@@ -3,6 +3,7 @@
 bool connectDatabase();
 void userRoutes(crow::SimpleApp& app);
 void itemRoutes(crow::SimpleApp& app);
+void claimRoutes(crow::SimpleApp& app);
 int main()
 {
     if (!connectDatabase())
@@ -14,6 +15,7 @@ int main()
 
     userRoutes(app);
     itemRoutes(app);
+    claimRoutes(app);
 
     CROW_ROUTE(app, "/")
     (

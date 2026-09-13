@@ -1,4 +1,8 @@
 #include "MainWindow.h"
+#include "AdminScreen.h"
+#include "AccessDeniedScreen.h"
+#include "ItemDetailsDialog.h"
+#include "ProfileDialog.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QStatusBar>
@@ -59,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_dashboardScreen(nullptr)
     , m_adminScreen(nullptr)
     , m_accessDeniedScreen(nullptr)
+    , m_myClaimsScreen(nullptr)
 {
     qDebug() << "[MainWindow] Initializing Campus Lost & Found GUI...";
 
@@ -143,6 +148,9 @@ void MainWindow::setupUI()
     qDebug() << "[MainWindow] setupUI: Instantiating AccessDeniedScreen...";
     m_accessDeniedScreen = new AccessDeniedScreen(this);
 
+    qDebug() << "[MainWindow] setupUI: Instantiating MyClaimsScreen...";
+    m_myClaimsScreen = new MyClaimsScreen(m_apiClient, this);
+
     qDebug() << "[MainWindow] setupUI: Adding screens to QStackedWidget...";
     m_stackedWidget->addWidget(m_homeScreen);          // Index 0
     m_stackedWidget->addWidget(m_browseScreen);        // Index 1
@@ -152,6 +160,7 @@ void MainWindow::setupUI()
     m_stackedWidget->addWidget(m_dashboardScreen);     // Index 5
     m_stackedWidget->addWidget(m_adminScreen);         // Index 6
     m_stackedWidget->addWidget(m_accessDeniedScreen);  // Index 7
+    m_stackedWidget->addWidget(m_myClaimsScreen);       // Index 8
 
     contentLayout->addWidget(m_stackedWidget);
     rootLayout->addWidget(contentArea);
@@ -168,13 +177,16 @@ void MainWindow::setupConnections()
     // Sidebar navigation
     connect(m_sidebarWidget, &SidebarWidget::navigateTo, this, &MainWindow::onNavigate);
     connect(m_sidebarWidget, &SidebarWidget::logoutRequested, m_authManager, &AuthManager::logout);
+    connect(m_sidebarWidget, &SidebarWidget::profileClicked, this, &MainWindow::onOpenProfileDialog);
 
     // Top Navbar navigation
     connect(m_navbarWidget, &NavbarWidget::navigateTo, this, &MainWindow::onNavigate);
     connect(m_navbarWidget, &NavbarWidget::logoutRequested, m_authManager, &AuthManager::logout);
+    connect(m_navbarWidget, &NavbarWidget::profileClicked, this, &MainWindow::onOpenProfileDialog);
 
     // Auth Manager state changes
     connect(m_authManager, &AuthManager::authStateChanged, this, &MainWindow::onAuthStateChanged);
+    connect(m_authManager, &AuthManager::userProfileUpdated, this, &MainWindow::onUserProfileUpdated);
 
     // Cross-screen navigation events
     connect(m_homeScreen, &HomeScreen::navigateTo, this, &MainWindow::onNavigate);
@@ -199,6 +211,9 @@ void MainWindow::setupConnections()
     connect(m_dashboardScreen, &DashboardScreen::viewItemDetails, this, &MainWindow::onShowItemDetails);
 
     connect(m_adminScreen, &AdminScreen::showToast, this, &MainWindow::onShowToast);
+
+    connect(m_myClaimsScreen, &MyClaimsScreen::navigateTo, this, &MainWindow::onNavigate);
+    connect(m_myClaimsScreen, &MyClaimsScreen::showToast, this, &MainWindow::onShowToast);
 
     connect(m_accessDeniedScreen, &AccessDeniedScreen::homeRequested, this, [this]() { onNavigate(0); });
     connect(m_accessDeniedScreen, &AccessDeniedScreen::loginRequested, this, [this]() { onNavigate(3); });
@@ -231,6 +246,17 @@ void MainWindow::onNavigate(int screenIndex)
         }
     }
 
+    // Permission guard for My Claims Screen (Index 8)
+    if (screenIndex == 8) {
+        if (!m_authManager->isLoggedIn()) {
+            onShowToast("Please sign in to view your claims and pickup passes", ToastType::Info);
+            m_stackedWidget->setCurrentIndex(3); // Login screen
+            m_sidebarWidget->setActiveScreen(3);
+            m_navbarWidget->setActiveScreen(3);
+            return;
+        }
+    }
+
     m_stackedWidget->setCurrentIndex(screenIndex);
     m_sidebarWidget->setActiveScreen(screenIndex);
     m_navbarWidget->setActiveScreen(screenIndex);
@@ -240,6 +266,7 @@ void MainWindow::onNavigate(int screenIndex)
     if (screenIndex == 1) m_browseScreen->refreshData();
     if (screenIndex == 5) m_dashboardScreen->refreshData();
     if (screenIndex == 6) m_adminScreen->refreshData();
+    if (screenIndex == 8) m_myClaimsScreen->refreshData();
 }
 
 void MainWindow::onAuthStateChanged(bool isLoggedIn)
@@ -252,7 +279,7 @@ void MainWindow::onAuthStateChanged(bool isLoggedIn)
         onShowToast(QString("Welcome back, %1!").arg(user.name.isEmpty() ? "User" : user.name), ToastType::Success);
     } else {
         onShowToast("You have been signed out.", ToastType::Info);
-        if (m_stackedWidget->currentIndex() == 5 || m_stackedWidget->currentIndex() == 6) {
+        if (m_stackedWidget->currentIndex() == 5 || m_stackedWidget->currentIndex() == 6 || m_stackedWidget->currentIndex() == 8) {
             onNavigate(0); // Redirect to Home
         }
     }
@@ -275,5 +302,33 @@ void MainWindow::onShowItemDetails(const Item &item)
         m_homeScreen->refreshData();
         m_dashboardScreen->refreshData();
     });
+    connect(&dialog, &ItemDetailsDialog::claimSubmitted, this, [this](int itemId) {
+        Q_UNUSED(itemId);
+        onShowToast("Claim request logged! Track live status in My Claims.", ToastType::Success);
+        m_browseScreen->refreshData();
+        m_homeScreen->refreshData();
+        m_dashboardScreen->refreshData();
+        if (m_myClaimsScreen) m_myClaimsScreen->refreshData();
+    });
     dialog.exec();
+}
+
+void MainWindow::onOpenProfileDialog()
+{
+    if (!m_authManager->isLoggedIn()) {
+        onShowToast("Please sign in to view your profile.", ToastType::Info);
+        onNavigate(3); // Login screen
+        return;
+    }
+
+    ProfileDialog dialog(m_apiClient, this);
+    dialog.exec();
+}
+
+void MainWindow::onUserProfileUpdated(const User &user)
+{
+    m_sidebarWidget->updateAuthStatus(true, user.name, user.role);
+    m_navbarWidget->updateAuthStatus(true, user.name, user.role);
+    m_dashboardScreen->refreshData();
+    onShowToast("Profile name updated successfully!", ToastType::Success);
 }

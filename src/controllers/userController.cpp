@@ -6,6 +6,8 @@
 #include <chrono>
 #include <atomic>
 #include <iomanip>
+#include <algorithm>
+#include "../middleware/authMiddleware.h"
 
 // Function and database from database.cpp
 extern sqlite3* db;
@@ -306,4 +308,139 @@ response["user"]["role"] = role;
 response["token"] = token;
 
     return crow::response(200, response);
+}
+
+crow::response getCurrentUser(const crow::request& req)
+{
+    AuthUser user;
+    if (!authenticateUser(req, user))
+    {
+        crow::json::wvalue err;
+        err["message"] = "Unauthorized";
+        return crow::response(401, err);
+    }
+
+    const char* query = "SELECT id, name, email, role FROM users WHERE id = ?;";
+    sqlite3_stmt* statement;
+    if (sqlite3_prepare_v2(db, query, -1, &statement, nullptr) != SQLITE_OK)
+    {
+        crow::json::wvalue err;
+        err["message"] = "Database query preparation failed";
+        return crow::response(500, err);
+    }
+
+    sqlite3_bind_int(statement, 1, user.id);
+
+    if (sqlite3_step(statement) != SQLITE_ROW)
+    {
+        sqlite3_finalize(statement);
+        crow::json::wvalue err;
+        err["message"] = "User not found";
+        return crow::response(404, err);
+    }
+
+    int id = sqlite3_column_int(statement, 0);
+    const char* nameCol = reinterpret_cast<const char*>(sqlite3_column_text(statement, 1));
+    const char* emailCol = reinterpret_cast<const char*>(sqlite3_column_text(statement, 2));
+    const char* roleCol = reinterpret_cast<const char*>(sqlite3_column_text(statement, 3));
+
+    crow::json::wvalue response;
+    response["user"]["id"] = id;
+    response["user"]["name"] = nameCol ? nameCol : "";
+    response["user"]["email"] = emailCol ? emailCol : "";
+    response["user"]["role"] = roleCol ? roleCol : "student";
+
+    sqlite3_finalize(statement);
+    return crow::response(200, response);
+}
+
+crow::response updateCurrentUser(const crow::request& req)
+{
+    AuthUser user;
+    if (!authenticateUser(req, user))
+    {
+        crow::json::wvalue err;
+        err["message"] = "Unauthorized";
+        return crow::response(401, err);
+    }
+
+    auto body = crow::json::load(req.body);
+    if (!body || !body.has("name"))
+    {
+        crow::json::wvalue err;
+        err["message"] = "Field 'name' is required";
+        return crow::response(400, err);
+    }
+
+    std::string newName = body["name"].s();
+    // Trim whitespace
+    newName.erase(newName.begin(), std::find_if(newName.begin(), newName.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+    newName.erase(std::find_if(newName.rbegin(), newName.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), newName.end());
+
+    if (newName.empty())
+    {
+        crow::json::wvalue err;
+        err["message"] = "Name cannot be empty";
+        return crow::response(400, err);
+    }
+    if (newName.length() > 100)
+    {
+        crow::json::wvalue err;
+        err["message"] = "Name cannot exceed 100 characters";
+        return crow::response(400, err);
+    }
+
+    const char* updateQuery = "UPDATE users SET name = ? WHERE id = ?;";
+    sqlite3_stmt* statement;
+    if (sqlite3_prepare_v2(db, updateQuery, -1, &statement, nullptr) != SQLITE_OK)
+    {
+        crow::json::wvalue err;
+        err["message"] = "Database query preparation failed";
+        return crow::response(500, err);
+    }
+
+    sqlite3_bind_text(statement, 1, newName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(statement, 2, user.id);
+
+    int stepResult = sqlite3_step(statement);
+    sqlite3_finalize(statement);
+
+    if (stepResult != SQLITE_DONE)
+    {
+        crow::json::wvalue err;
+        err["message"] = "Failed to update profile";
+        return crow::response(500, err);
+    }
+
+    // Return updated user
+    const char* selectQuery = "SELECT id, name, email, role FROM users WHERE id = ?;";
+    if (sqlite3_prepare_v2(db, selectQuery, -1, &statement, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(statement, 1, user.id);
+        if (sqlite3_step(statement) == SQLITE_ROW)
+        {
+            crow::json::wvalue resp;
+            resp["message"] = "Profile updated successfully";
+            resp["user"]["id"] = sqlite3_column_int(statement, 0);
+            const char* n = reinterpret_cast<const char*>(sqlite3_column_text(statement, 1));
+            const char* e = reinterpret_cast<const char*>(sqlite3_column_text(statement, 2));
+            const char* r = reinterpret_cast<const char*>(sqlite3_column_text(statement, 3));
+            resp["user"]["name"] = n ? n : "";
+            resp["user"]["email"] = e ? e : "";
+            resp["user"]["role"] = r ? r : "student";
+            sqlite3_finalize(statement);
+            return crow::response(200, resp);
+        }
+        sqlite3_finalize(statement);
+    }
+
+    crow::json::wvalue resp;
+    resp["message"] = "Profile updated successfully";
+    resp["user"]["id"] = user.id;
+    resp["user"]["name"] = newName;
+    return crow::response(200, resp);
 }

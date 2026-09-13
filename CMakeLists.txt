@@ -109,11 +109,13 @@ add_executable(
 
     src/controllers/userController.cpp
     src/controllers/itemController.cpp
+    src/controllers/claimController.cpp
 
     src/middleware/authMiddleware.cpp
 
     src/routes/userRoutes.cpp
     src/routes/itemRoutes.cpp
+    src/routes/claimRoutes.cpp
 )
 
 

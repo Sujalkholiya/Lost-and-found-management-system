@@ -33,6 +33,10 @@ crow::response getUploadedFile(
     const std::string& filename
 );
 
+crow::response getUserItems(
+    const crow::request& req
+);
+
 
 void itemRoutes(crow::SimpleApp& app)
 {
@@ -47,6 +51,12 @@ void itemRoutes(crow::SimpleApp& app)
     .methods(crow::HTTPMethod::GET)
     (
         getAllItems
+    );
+
+    CROW_ROUTE(app, "/api/users/me/items")
+    .methods(crow::HTTPMethod::GET)
+    (
+        getUserItems
     );
 
 

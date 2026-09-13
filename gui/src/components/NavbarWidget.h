@@ -18,14 +18,23 @@ public:
 signals:
     void navigateTo(int screenIndex);
     void logoutRequested();
+    void profileClicked();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     void setupUI();
+    void updateAvatar(const QString &name);
 
     QLabel *m_brandTitle;
     QLabel *m_statusDot;
     QLabel *m_roleBadge;
     QLabel *m_userLabel;
+    QLabel *m_avatarLabel;
+    QWidget *m_profileTrigger;
+    QWidget *m_authContainer;
+    QWidget *m_guestContainer;
     QPushButton *m_homeQuickBtn;
     QPushButton *m_browseQuickBtn;
     QPushButton *m_reportQuickBtn;

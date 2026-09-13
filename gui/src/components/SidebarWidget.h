@@ -18,17 +18,22 @@ public:
 signals:
     void navigateTo(int screenIndex);
     void logoutRequested();
+    void profileClicked();
 
 private:
     void setupUI();
     QPushButton* createNavButton(const QString &text, const QString &iconText, int screenIndex);
+    void updateAvatar(const QString &name);
 
     QVBoxLayout *m_layout;
     QList<QPushButton*> m_navButtons;
     QPushButton *m_adminBtn;
     QPushButton *m_dashboardBtn;
+    QPushButton *m_claimsBtn;
     QPushButton *m_loginBtn;
     QPushButton *m_logoutBtn;
+    QPushButton *m_profileCardBtn;
+    QLabel *m_userAvatarLabel;
     QLabel *m_userBadgeLabel;
     QLabel *m_userNameLabel;
 };

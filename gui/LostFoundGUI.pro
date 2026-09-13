@@ -31,15 +31,21 @@ SOURCES += \
     src/views/DashboardScreen.cpp \
     src/views/AdminScreen.cpp \
     src/views/AccessDeniedScreen.cpp \
+    src/views/ProfileDialog.cpp \
+    src/views/ClaimFormDialog.cpp \
+    src/views/MyClaimsScreen.cpp \
+    src/views/AdminClaimReviewDialog.cpp \
     src/views/MainWindow.cpp
 
 HEADERS += \
     src/models/User.h \
     src/models/Item.h \
+    src/models/Claim.h \
     src/models/CampusLocations.h \
     src/auth/AuthManager.h \
     src/network/ApiClient.h \
     src/network/ImageLoader.h \
+    src/components/AvatarHelper.h \
     src/components/NavbarWidget.h \
     src/components/SidebarWidget.h \
     src/components/ItemCardWidget.h \
@@ -55,6 +61,10 @@ HEADERS += \
     src/views/DashboardScreen.h \
     src/views/AdminScreen.h \
     src/views/AccessDeniedScreen.h \
+    src/views/ProfileDialog.h \
+    src/views/ClaimFormDialog.h \
+    src/views/MyClaimsScreen.h \
+    src/views/AdminClaimReviewDialog.h \
     src/views/MainWindow.h
 
 RESOURCES += \

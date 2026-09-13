@@ -90,6 +90,33 @@ bool connectDatabase()
     );
 )";
 
+    const char* createClaimsTable = R"(
+    CREATE TABLE IF NOT EXISTS claims (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        claim_reference TEXT NOT NULL UNIQUE,
+        item_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        last_seen_location TEXT NOT NULL,
+        unique_identifying_details TEXT NOT NULL,
+        item_contents TEXT NOT NULL,
+        additional_details TEXT DEFAULT '',
+        rejection_reason TEXT DEFAULT '',
+        pickup_location TEXT DEFAULT 'Admin Block',
+        reviewed_by INTEGER,
+        handover_admin_id INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        reviewed_at DATETIME,
+        approved_at DATETIME,
+        handed_over_at DATETIME,
+
+        FOREIGN KEY (item_id) REFERENCES items(id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (reviewed_by) REFERENCES users(id),
+        FOREIGN KEY (handover_admin_id) REFERENCES users(id)
+    );
+)";
+
     if (!executeQuery(createUsersTable))
     {
         return false;
@@ -102,6 +129,11 @@ bool connectDatabase()
     }
 
     if (!executeQuery(createSessionsTable))
+    {
+        return false;
+    }
+
+    if (!executeQuery(createClaimsTable))
     {
         return false;
     }

@@ -75,6 +75,15 @@ void AuthManager::setSession(const User &user, const QString &token)
     emit authStateChanged(true);
 }
 
+void AuthManager::updateProfile(const QString &newName)
+{
+    m_currentUser.name = newName.trimmed();
+    saveSession();
+    qDebug() << "[AuthManager] Profile updated. User ID:" << m_currentUser.id
+             << "New Name:" << m_currentUser.name;
+    emit userProfileUpdated(m_currentUser);
+}
+
 void AuthManager::logout()
 {
     clearSession();

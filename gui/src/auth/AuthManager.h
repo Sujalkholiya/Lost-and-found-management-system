@@ -27,6 +27,7 @@ public:
 
     // Session State Mutators
     void setSession(const User &user, const QString &token);
+    void updateProfile(const QString &newName);
     void logout();
     void clearSession();
 
@@ -34,6 +35,7 @@ signals:
     void authStateChanged(bool isLoggedIn);
     void userLoggedIn(const User &user);
     void userLoggedOut();
+    void userProfileUpdated(const User &user);
 
 private:
     explicit AuthManager(QObject *parent = nullptr);

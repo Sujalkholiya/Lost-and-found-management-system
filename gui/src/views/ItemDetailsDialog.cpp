@@ -1,4 +1,5 @@
 #include "ItemDetailsDialog.h"
+#include "ClaimFormDialog.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -9,14 +10,24 @@
 #include "../network/ImageLoader.h"
 #include "../auth/AuthManager.h"
 
+ItemDetailsDialog::ItemDetailsDialog(const Item& item, QWidget* parent)
+    : ItemDetailsDialog(item, nullptr, parent)
+{
+}
+
 ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWidget* parent)
     : QDialog(parent),
       m_item(item),
-      m_apiClient(apiClient)
+      m_apiClient(apiClient),
+      m_hasClaim(false),
+      m_claimBtn(nullptr),
+      m_claimStatusBox(nullptr),
+      m_claimStatusLabel(nullptr)
 {
+    setObjectName("ItemDetailsDialog");
     setWindowTitle(item.title);
-    setFixedSize(540, 640);
-    setStyleSheet("background-color: #FFFFFF;");
+    setFixedSize(560, 680);
+    setStyleSheet("#ItemDetailsDialog { background-color: #FFFFFF; font-family: 'Segoe UI', sans-serif; }");
 
     QVBoxLayout* rootLayout = new QVBoxLayout(this);
     rootLayout->setContentsMargins(0, 0, 0, 0);
@@ -31,16 +42,21 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
     layout->setContentsMargins(32, 28, 32, 28);
     layout->setSpacing(16);
 
-    // Top Header: Type Badge + Close button
+    // Top Header: Type Badge / Returned Badge
     QHBoxLayout* header = new QHBoxLayout();
-    QLabel* badge = new QLabel(item.isLost() ? "🔴 LOST ITEM" : "🟢 FOUND ITEM", this);
-    badge->setStyleSheet(QString(
-        "background-color: %1; color: %2; font-size: 12px; font-weight: bold; padding: 6px 14px; border-radius: 8px; border: 1px solid %3;"
-    ).arg(
-        item.isLost() ? "#FFF1F2" : "#ECFDF5",
-        item.isLost() ? "#E11D48" : "#059669",
-        item.isLost() ? "#FECDD3" : "#A7F3D0"
-    ));
+    bool isReturned = (item.status.toLower() == "returned");
+
+    QLabel* badge = new QLabel(this);
+    if (isReturned) {
+        badge->setText("✓ RETURNED TO OWNER");
+        badge->setStyleSheet("background-color: #F0FDF4; color: #15803D; font-size: 12px; font-weight: bold; padding: 6px 14px; border-radius: 8px; border: 1px solid #BBF7D0;");
+    } else if (item.isLost()) {
+        badge->setText("🔴 LOST ITEM");
+        badge->setStyleSheet("background-color: #FFF1F2; color: #E11D48; font-size: 12px; font-weight: bold; padding: 6px 14px; border-radius: 8px; border: 1px solid #FECDD3;");
+    } else {
+        badge->setText("🟢 FOUND ITEM — AVAILABLE TO CLAIM");
+        badge->setStyleSheet("background-color: #ECFDF5; color: #059669; font-size: 12px; font-weight: bold; padding: 6px 14px; border-radius: 8px; border: 1px solid #A7F3D0;");
+    }
     header->addWidget(badge);
     header->addStretch();
     layout->addLayout(header);
@@ -105,28 +121,33 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
     QVBoxLayout* guideLayout = new QVBoxLayout(guideBox);
     QLabel* guideTitle = new QLabel("🛡️ Campus Recovery Guideline", guideBox);
     guideTitle->setStyleSheet("font-size: 12px; font-weight: bold; color: #3730A3;");
-    QLabel* guideText = new QLabel("Always arrange item handovers in well-lit, public campus areas like the Student Center or Library front desk.", guideBox);
+    QLabel* guideText = new QLabel("All item handovers are coordinated through the Admin Block campus security desk after identity verification.", guideBox);
     guideText->setStyleSheet("font-size: 11px; color: #4338CA;");
     guideText->setWordWrap(true);
     guideLayout->addWidget(guideTitle);
     guideLayout->addWidget(guideText);
     layout->addWidget(guideBox);
 
+    // Dynamic Claim Status Box
+    m_claimStatusBox = new QFrame(this);
+    m_claimStatusBox->setStyleSheet("border-radius: 10px; padding: 12px;");
+    QVBoxLayout* csLayout = new QVBoxLayout(m_claimStatusBox);
+    m_claimStatusLabel = new QLabel(m_claimStatusBox);
+    m_claimStatusLabel->setWordWrap(true);
+    m_claimStatusLabel->setStyleSheet("font-size: 13px; font-weight: bold;");
+    csLayout->addWidget(m_claimStatusLabel);
+    m_claimStatusBox->hide();
+    layout->addWidget(m_claimStatusBox);
+
     layout->addStretch();
 
-    // Close Button
-    // Buttons Layout: Delete (if authorized) + Done
+    // Buttons Row: Claim Item / Delete / Close
     QHBoxLayout* btnLayout = new QHBoxLayout();
     btnLayout->setSpacing(12);
 
-    bool canDelete = false;
-    if (AuthManager::instance().isLoggedIn()) {
-        int currentUserId = AuthManager::instance().userId();
-        bool isAdmin = AuthManager::instance().isAdmin();
-        if (isAdmin || (currentUserId > 0 && currentUserId == m_item.userId)) {
-            canDelete = true;
-        }
-    }
+    int currentUserId = AuthManager::instance().userId();
+    bool isAdmin = AuthManager::instance().isAdmin();
+    bool canDelete = (isAdmin || (currentUserId > 0 && currentUserId == m_item.userId));
 
     if (canDelete && m_apiClient) {
         QPushButton* deleteBtn = new QPushButton("🗑 Delete Item", this);
@@ -151,27 +172,137 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
         btnLayout->addWidget(deleteBtn);
     }
 
-    QPushButton* closeBtn = new QPushButton("Done", this);
+    // Claim Button for FOUND items
+    if (m_item.isFound()) {
+        m_claimBtn = new QPushButton(this);
+        m_claimBtn->setCursor(Qt::PointingHandCursor);
+
+        if (isReturned) {
+            m_claimBtn->setText("✓ Item Returned to Owner");
+            m_claimBtn->setEnabled(false);
+            m_claimBtn->setStyleSheet("background-color: #E2E8F0; color: #64748B; border: none; border-radius: 10px; padding: 10px 18px; font-weight: bold;");
+        } else if (!AuthManager::instance().isLoggedIn()) {
+            m_claimBtn->setText("🔒 Sign In to Claim");
+            m_claimBtn->setStyleSheet("background-color: #F1F5F9; color: #334155; border: 1px solid #CBD5E1; border-radius: 10px; padding: 10px 18px; font-weight: bold;");
+            connect(m_claimBtn, &QPushButton::clicked, this, [this]() {
+                QMessageBox::information(this, "Sign In Required", "Please sign in to your student account to claim this item.");
+            });
+        } else if (currentUserId == m_item.userId) {
+            m_claimBtn->setText("You Reported This Item");
+            m_claimBtn->setEnabled(false);
+            m_claimBtn->setStyleSheet("background-color: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 18px; font-weight: bold;");
+        } else {
+            m_claimBtn->setText("🎯 Claim This Item");
+            m_claimBtn->setStyleSheet(
+                "QPushButton {"
+                "   background-color: #2563EB;"
+                "   color: #FFFFFF;"
+                "   font-weight: bold;"
+                "   font-size: 13px;"
+                "   padding: 10px 20px;"
+                "   border-radius: 10px;"
+                "   border: none;"
+                "}"
+                "QPushButton:hover { background-color: #1D4ED8; }"
+                "QPushButton:disabled { background-color: #CBD5E1; color: #64748B; }"
+            );
+            connect(m_claimBtn, &QPushButton::clicked, this, &ItemDetailsDialog::onClaimClicked);
+        }
+
+        btnLayout->addWidget(m_claimBtn, 1);
+    }
+
+    QPushButton* closeBtn = new QPushButton("Close", this);
     closeBtn->setCursor(Qt::PointingHandCursor);
     closeBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4F46E5;"
-        "   color: white;"
+        "   background-color: #F1F5F9;"
+        "   color: #334155;"
         "   font-weight: bold;"
         "   font-size: 13px;"
         "   padding: 10px 24px;"
         "   border-radius: 10px;"
-        "   border: none;"
+        "   border: 1px solid #CBD5E1;"
         "}"
-        "QPushButton:hover { background-color: #4338CA; }"
+        "QPushButton:hover { background-color: #E2E8F0; }"
     );
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
-    btnLayout->addWidget(closeBtn, 1);
+    btnLayout->addWidget(closeBtn);
 
     layout->addLayout(btnLayout);
 
     scrollArea->setWidget(contentWidget);
     rootLayout->addWidget(scrollArea);
+
+    if (m_item.isFound() && !isReturned && AuthManager::instance().isLoggedIn() && currentUserId != m_item.userId) {
+        checkClaimStatus();
+    }
+}
+
+void ItemDetailsDialog::checkClaimStatus()
+{
+    if (!m_apiClient) return;
+
+    m_apiClient->getMyClaimForItem(
+        m_item.id,
+        [this](bool hasClaim, const Claim& claim) {
+            m_hasClaim = hasClaim;
+            m_currentClaim = claim;
+
+            if (hasClaim && m_claimBtn) {
+                m_claimStatusBox->show();
+
+                if (claim.isPending()) {
+                    m_claimStatusBox->setStyleSheet("background-color: #FFFBEB; border: 1px solid #FDE68A;");
+                    m_claimStatusLabel->setStyleSheet("color: #92400E; font-size: 12px;");
+                    m_claimStatusLabel->setText(
+                        QString("⏳ You have a pending claim for this item (Ref: %1). Under administrative review.")
+                            .arg(claim.claimReference)
+                    );
+                    m_claimBtn->setText("Claim Pending Review");
+                    m_claimBtn->setEnabled(false);
+                } else if (claim.isApproved()) {
+                    m_claimStatusBox->setStyleSheet("background-color: #ECFDF5; border: 1.5px solid #059669;");
+                    m_claimStatusLabel->setStyleSheet("color: #065F46; font-size: 12px;");
+                    m_claimStatusLabel->setText(
+                        QString("🎉 Your claim (%1) is APPROVED! Please visit %2 with your student ID.")
+                            .arg(claim.claimReference, claim.pickupLocation)
+                    );
+                    m_claimBtn->setText("✓ Approved — Ready for Pickup");
+                    m_claimBtn->setEnabled(false);
+                } else if (claim.isHandedOver()) {
+                    m_claimStatusBox->setStyleSheet("background-color: #F0FDF4; border: 1px solid #BBF7D0;");
+                    m_claimStatusLabel->setStyleSheet("color: #15803D; font-size: 12px;");
+                    m_claimStatusLabel->setText("🎉 Item handed over and officially returned to you.");
+                    m_claimBtn->setText("✓ Item Handed Over");
+                    m_claimBtn->setEnabled(false);
+                } else if (claim.isRejected()) {
+                    m_claimStatusBox->setStyleSheet("background-color: #FEF2F2; border: 1px solid #FECDD3;");
+                    m_claimStatusLabel->setStyleSheet("color: #991B1B; font-size: 12px;");
+                    m_claimStatusLabel->setText(
+                        QString("⚠️ Previous claim not approved (%1). You may submit a new claim with clearer details.")
+                            .arg(claim.rejectionReason)
+                    );
+                    m_claimBtn->setText("🎯 Resubmit Claim");
+                    m_claimBtn->setEnabled(true);
+                }
+            }
+        },
+        [this](int code, const QString& err) {
+            Q_UNUSED(code);
+            Q_UNUSED(err);
+        }
+    );
+}
+
+void ItemDetailsDialog::onClaimClicked()
+{
+    ClaimFormDialog dlg(m_item, m_apiClient, this);
+    connect(&dlg, &ClaimFormDialog::claimSubmitted, this, [this](const Claim& claim) {
+        emit claimSubmitted(m_item.id);
+        checkClaimStatus();
+    });
+    dlg.exec();
 }
 
 void ItemDetailsDialog::onDeleteClicked()
@@ -207,4 +338,3 @@ void ItemDetailsDialog::onDeleteClicked()
         }
     );
 }
-

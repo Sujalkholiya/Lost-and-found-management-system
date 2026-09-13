@@ -17,6 +17,7 @@
 #include "AdminScreen.h"
 #include "AccessDeniedScreen.h"
 #include "ItemDetailsDialog.h"
+#include "MyClaimsScreen.h"
 
 class MainWindow : public QMainWindow
 {
@@ -31,6 +32,8 @@ private slots:
     void onAuthStateChanged(bool isLoggedIn);
     void onShowToast(const QString &message, ToastType type);
     void onShowItemDetails(const Item &item);
+    void onOpenProfileDialog();
+    void onUserProfileUpdated(const User &user);
 
 private:
     void setupUI();
@@ -52,6 +55,7 @@ private:
     DashboardScreen *m_dashboardScreen;
     AdminScreen *m_adminScreen;
     AccessDeniedScreen *m_accessDeniedScreen;
+    MyClaimsScreen *m_myClaimsScreen;
 };
 
 #endif // MAINWINDOW_H

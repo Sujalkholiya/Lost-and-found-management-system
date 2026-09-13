@@ -268,6 +268,211 @@ void ApiClient::deleteItem(
     sendDelete(QString("/api/items/%1").arg(itemId), true, onSuccess, onError);
 }
 
+// 8. Get Current User Profile: GET /api/users/me
+void ApiClient::getProfile(
+    JsonCallback onSuccess,
+    ErrorCallback onError)
+{
+    sendGet("/api/users/me", true, onSuccess, onError);
+}
+
+// 9. Update Current User Profile: PUT /api/users/me
+void ApiClient::updateProfile(
+    const QString &newName,
+    JsonCallback onSuccess,
+    ErrorCallback onError)
+{
+    QJsonObject body;
+    body["name"] = newName.trimmed();
+    sendPut("/api/users/me", body, true, onSuccess, onError);
+}
+
+// 10. Get Logged-In User's Items: GET /api/users/me/items
+void ApiClient::getUserItems(
+    ItemsCallback onSuccess,
+    ErrorCallback onError)
+{
+    sendGet("/api/users/me/items", true,
+        [onSuccess, onError](const QJsonObject &response) {
+            int count = response.value("count").toInt(0);
+            QJsonArray itemsArray = response.value("items").toArray();
+            
+            QVector<Item> items;
+            for (const QJsonValue &val : itemsArray) {
+                items.append(Item::fromJson(val.toObject()));
+            }
+
+            if (onSuccess) {
+                onSuccess(items, count > 0 ? count : items.size());
+            }
+        },
+        onError
+    );
+}
+
+// 11. Submit Claim for Item: POST /api/items/:id/claims
+void ApiClient::submitClaim(
+    int itemId,
+    const QString &lastSeenLocation,
+    const QString &uniqueDetails,
+    const QString &itemContents,
+    const QString &additionalDetails,
+    ClaimCallback onSuccess,
+    ErrorCallback onError)
+{
+    QJsonObject body;
+    body["last_seen_location"] = lastSeenLocation;
+    body["unique_identifying_details"] = uniqueDetails;
+    body["item_contents"] = itemContents;
+    if (!additionalDetails.trimmed().isEmpty()) {
+        body["additional_details"] = additionalDetails;
+    }
+
+    sendPost(QString("/api/items/%1/claims").arg(itemId), body, true,
+        [onSuccess](const QJsonObject &response) {
+            QJsonObject claimObj;
+            if (response.contains("claim") && response.value("claim").isObject()) {
+                claimObj = response.value("claim").toObject();
+            } else if (response.contains("data") && response.value("data").isObject()) {
+                claimObj = response.value("data").toObject();
+            } else {
+                claimObj = response;
+            }
+
+            if (onSuccess) {
+                onSuccess(Claim::fromJson(claimObj));
+            }
+        },
+        onError
+    );
+}
+
+// 12. Get Current User Claims: GET /api/users/me/claims
+void ApiClient::getUserClaims(
+    ClaimsCallback onSuccess,
+    ErrorCallback onError)
+{
+    sendGet("/api/users/me/claims", true,
+        [onSuccess](const QJsonObject &response) {
+            int count = response.value("count").toInt(0);
+            QJsonArray claimsArray = response.value("claims").toArray();
+
+            QVector<Claim> claims;
+            for (const QJsonValue &val : claimsArray) {
+                claims.append(Claim::fromJson(val.toObject()));
+            }
+
+            if (onSuccess) {
+                onSuccess(claims, count > 0 ? count : claims.size());
+            }
+        },
+        onError
+    );
+}
+
+// 13. Get Current User Claim for specific Item: GET /api/items/:id/my-claim
+void ApiClient::getMyClaimForItem(
+    int itemId,
+    MyClaimCallback onSuccess,
+    ErrorCallback onError)
+{
+    sendGet(QString("/api/items/%1/my-claim").arg(itemId), true,
+        [onSuccess](const QJsonObject &response) {
+            bool hasClaim = response.value("has_claim").toBool(false);
+            Claim claim;
+            if (hasClaim) {
+                claim = Claim::fromJson(response.value("claim").toObject());
+            }
+            if (onSuccess) {
+                onSuccess(hasClaim, claim);
+            }
+        },
+        onError
+    );
+}
+
+// 14. Get Claim Details by ID: GET /api/claims/:id
+void ApiClient::getClaimById(
+    int claimId,
+    ClaimCallback onSuccess,
+    ErrorCallback onError)
+{
+    sendGet(QString("/api/claims/%1").arg(claimId), true,
+        [onSuccess](const QJsonObject &response) {
+            if (onSuccess) {
+                onSuccess(Claim::fromJson(response));
+            }
+        },
+        onError
+    );
+}
+
+// 15. Admin Get All Claims: GET /api/admin/claims
+void ApiClient::getAdminClaims(
+    const QString &statusFilter,
+    ClaimStatsCallback onSuccess,
+    ErrorCallback onError)
+{
+    QString endpoint = "/api/admin/claims";
+    if (!statusFilter.trimmed().isEmpty() && statusFilter != "all") {
+        endpoint += QString("?status=%1").arg(statusFilter);
+    }
+
+    sendGet(endpoint, true,
+        [onSuccess](const QJsonObject &response) {
+            QJsonArray claimsArray = response.value("claims").toArray();
+            QVector<Claim> claims;
+            for (const QJsonValue &val : claimsArray) {
+                claims.append(Claim::fromJson(val.toObject()));
+            }
+
+            ClaimStats stats = ClaimStats::fromJson(response.value("stats").toObject());
+            if (onSuccess) {
+                onSuccess(claims, stats);
+            }
+        },
+        onError
+    );
+}
+
+// 16. Admin Approve Claim: PUT /api/admin/claims/:id/approve
+void ApiClient::approveClaim(
+    int claimId,
+    const QString &pickupLocation,
+    JsonCallback onSuccess,
+    ErrorCallback onError)
+{
+    QJsonObject body;
+    if (!pickupLocation.trimmed().isEmpty()) {
+        body["pickup_location"] = pickupLocation;
+    }
+
+    sendPut(QString("/api/admin/claims/%1/approve").arg(claimId), body, true, onSuccess, onError);
+}
+
+// 17. Admin Reject Claim: PUT /api/admin/claims/:id/reject
+void ApiClient::rejectClaim(
+    int claimId,
+    const QString &reason,
+    JsonCallback onSuccess,
+    ErrorCallback onError)
+{
+    QJsonObject body;
+    body["rejection_reason"] = reason;
+
+    sendPut(QString("/api/admin/claims/%1/reject").arg(claimId), body, true, onSuccess, onError);
+}
+
+// 18. Admin Handover Item: PUT /api/admin/claims/:id/handover
+void ApiClient::handoverClaim(
+    int claimId,
+    JsonCallback onSuccess,
+    ErrorCallback onError)
+{
+    QJsonObject emptyBody;
+    sendPut(QString("/api/admin/claims/%1/handover").arg(claimId), emptyBody, true, onSuccess, onError);
+}
+
 // Centralized GET dispatcher
 void ApiClient::sendGet(
     const QString &endpoint,
@@ -297,6 +502,25 @@ void ApiClient::sendPost(
     QNetworkRequest request = createRequest(endpoint, requiresAuth);
     QByteArray data = QJsonDocument(body).toJson(QJsonDocument::Compact);
     QNetworkReply *reply = m_manager->post(request, data);
+
+    connect(reply, &QNetworkReply::finished, this, [this, reply, onSuccess, onError]() {
+        emit networkActivityFinished();
+        handleReply(reply, onSuccess, onError);
+    });
+}
+
+// Centralized PUT dispatcher
+void ApiClient::sendPut(
+    const QString &endpoint,
+    const QJsonObject &body,
+    bool requiresAuth,
+    JsonCallback onSuccess,
+    ErrorCallback onError)
+{
+    emit networkActivityStarted();
+    QNetworkRequest request = createRequest(endpoint, requiresAuth);
+    QByteArray data = QJsonDocument(body).toJson(QJsonDocument::Compact);
+    QNetworkReply *reply = m_manager->put(request, data);
 
     connect(reply, &QNetworkReply::finished, this, [this, reply, onSuccess, onError]() {
         emit networkActivityFinished();

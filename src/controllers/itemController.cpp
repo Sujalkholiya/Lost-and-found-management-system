@@ -559,9 +559,6 @@ crow::response deleteItem(
     int id
 )
 {
-    const char* query =
-        "DELETE FROM items "
-        "WHERE id = ?;";
     AuthUser user;
     if (!authenticateUser(req, user))
     {
@@ -570,43 +567,28 @@ crow::response deleteItem(
         return crow::response(401, err);
     }
 
-    sqlite3_stmt* statement;
     // 1. Look up item by id to verify existence and check owner
     const char* selectQuery =
         "SELECT user_id, image_path FROM items WHERE id = ?;";
 
-    int result = sqlite3_prepare_v2(
     sqlite3_stmt* selectStmt;
     int prepResult = sqlite3_prepare_v2(
         db,
-        query,
         selectQuery,
         -1,
-        &statement,
         &selectStmt,
         nullptr
     );
 
-    if (result != SQLITE_OK)
     if (prepResult != SQLITE_OK)
     {
-        return crow::response(
-            500,
-            "Database query preparation failed"
-        );
         crow::json::wvalue err;
         err["message"] = "Database query preparation failed";
         return crow::response(500, err);
     }
 
-sqlite3_bind_int(
-    statement,
-    1,
-    id
-);
     sqlite3_bind_int(selectStmt, 1, id);
 
-result = sqlite3_step(statement);
     int stepResult = sqlite3_step(selectStmt);
     if (stepResult != SQLITE_ROW)
     {
@@ -616,13 +598,11 @@ result = sqlite3_step(statement);
         return crow::response(404, err);
     }
 
-int changes = sqlite3_changes(db);
     int itemUserId = sqlite3_column_int(selectStmt, 0);
     const char* imgPathCol = reinterpret_cast<const char*>(sqlite3_column_text(selectStmt, 1));
     std::string itemImagePath = imgPathCol ? imgPathCol : "";
     sqlite3_finalize(selectStmt);
 
-sqlite3_finalize(statement);
     // 2. Check authorization: owner or admin
     if (user.role != "admin" && user.id != itemUserId)
     {
@@ -631,11 +611,6 @@ sqlite3_finalize(statement);
         return crow::response(403, err);
     }
 
-if (changes == 0)
-{
-    return crow::response(
-        404,
-        "Item not found"
     // 3. Delete the item row
     const char* deleteQuery =
         "DELETE FROM items WHERE id = ?;";
@@ -648,12 +623,7 @@ if (changes == 0)
         &deleteStmt,
         nullptr
     );
-}
 
-return crow::response(
-    200,
-    "Item deleted successfully"
-);
     if (prepResult != SQLITE_OK)
     {
         crow::json::wvalue err;
@@ -688,6 +658,65 @@ return crow::response(
 
     crow::json::wvalue response;
     response["message"] = "Item deleted successfully";
+    return crow::response(200, response);
+}
+
+crow::response getUserItems(const crow::request& req)
+{
+    AuthUser user;
+    if (!authenticateUser(req, user))
+    {
+        crow::json::wvalue err;
+        err["message"] = "Unauthorized";
+        return crow::response(401, err);
+    }
+
+    const char* query =
+        "SELECT id, title, description, type, location, status, user_id, created_at, image_path "
+        "FROM items "
+        "WHERE user_id = ? "
+        "ORDER BY id DESC;";
+
+    sqlite3_stmt* statement;
+    int result = sqlite3_prepare_v2(
+        db,
+        query,
+        -1,
+        &statement,
+        nullptr
+    );
+
+    if (result != SQLITE_OK)
+    {
+        crow::json::wvalue err;
+        err["message"] = "Database query preparation failed";
+        return crow::response(500, err);
+    }
+
+    sqlite3_bind_int(statement, 1, user.id);
+
+    crow::json::wvalue response;
+    int index = 0;
+
+    while (sqlite3_step(statement) == SQLITE_ROW)
+    {
+        response["items"][index]["id"] = sqlite3_column_int(statement, 0);
+        response["items"][index]["title"] = reinterpret_cast<const char*>(sqlite3_column_text(statement, 1));
+        response["items"][index]["description"] = reinterpret_cast<const char*>(sqlite3_column_text(statement, 2));
+        response["items"][index]["type"] = reinterpret_cast<const char*>(sqlite3_column_text(statement, 3));
+        response["items"][index]["location"] = reinterpret_cast<const char*>(sqlite3_column_text(statement, 4));
+        const char* st = reinterpret_cast<const char*>(sqlite3_column_text(statement, 5));
+        response["items"][index]["status"] = st ? st : "active";
+        response["items"][index]["user_id"] = sqlite3_column_int(statement, 6);
+        const char* ca = reinterpret_cast<const char*>(sqlite3_column_text(statement, 7));
+        response["items"][index]["created_at"] = ca ? ca : "";
+        const char* imgPath = reinterpret_cast<const char*>(sqlite3_column_text(statement, 8));
+        response["items"][index]["image_path"] = imgPath ? imgPath : "";
+        index++;
+    }
+
+    sqlite3_finalize(statement);
+    response["count"] = index;
     return crow::response(200, response);
 }
 

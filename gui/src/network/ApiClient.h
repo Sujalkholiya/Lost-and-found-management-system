@@ -11,6 +11,7 @@
 #include <functional>
 #include "../models/Item.h"
 #include "../models/User.h"
+#include "../models/Claim.h"
 
 class ApiClient : public QObject
 {
@@ -21,6 +22,10 @@ public:
     using ItemsCallback = std::function<void(const QVector<Item> &items, int count)>;
     using ItemCallback = std::function<void(const Item &item)>;
     using UserCallback = std::function<void(const User &user, const QString &token)>;
+    using ClaimsCallback = std::function<void(const QVector<Claim> &claims, int count)>;
+    using ClaimCallback = std::function<void(const Claim &claim)>;
+    using ClaimStatsCallback = std::function<void(const QVector<Claim> &claims, const ClaimStats &stats)>;
+    using MyClaimCallback = std::function<void(bool hasClaim, const Claim &claim)>;
     using ErrorCallback = std::function<void(int statusCode, const QString &errorMessage)>;
 
     explicit ApiClient(QObject *parent = nullptr);
@@ -84,6 +89,86 @@ public:
         ErrorCallback onError
     );
 
+    // 8. Get Current User Profile: GET /api/users/me
+    void getProfile(
+        JsonCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 9. Update Current User Profile: PUT /api/users/me
+    void updateProfile(
+        const QString &newName,
+        JsonCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 10. Get Logged-In User's Items: GET /api/users/me/items
+    void getUserItems(
+        ItemsCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 11. Submit Claim for Item: POST /api/items/:id/claims
+    void submitClaim(
+        int itemId,
+        const QString &lastSeenLocation,
+        const QString &uniqueDetails,
+        const QString &itemContents,
+        const QString &additionalDetails,
+        ClaimCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 12. Get Current User Claims: GET /api/users/me/claims
+    void getUserClaims(
+        ClaimsCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 13. Get Current User Claim for specific Item: GET /api/items/:id/my-claim
+    void getMyClaimForItem(
+        int itemId,
+        MyClaimCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 14. Get Claim Details by ID: GET /api/claims/:id
+    void getClaimById(
+        int claimId,
+        ClaimCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 15. Admin Get All Claims: GET /api/admin/claims
+    void getAdminClaims(
+        const QString &statusFilter,
+        ClaimStatsCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 16. Admin Approve Claim: PUT /api/admin/claims/:id/approve
+    void approveClaim(
+        int claimId,
+        const QString &pickupLocation,
+        JsonCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 17. Admin Reject Claim: PUT /api/admin/claims/:id/reject
+    void rejectClaim(
+        int claimId,
+        const QString &reason,
+        JsonCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    // 18. Admin Handover Item: PUT /api/admin/claims/:id/handover
+    void handoverClaim(
+        int claimId,
+        JsonCallback onSuccess,
+        ErrorCallback onError
+    );
+
 signals:
     void networkActivityStarted();
     void networkActivityFinished();
@@ -97,6 +182,14 @@ private:
     );
 
     void sendPost(
+        const QString &endpoint,
+        const QJsonObject &body,
+        bool requiresAuth,
+        JsonCallback onSuccess,
+        ErrorCallback onError
+    );
+
+    void sendPut(
         const QString &endpoint,
         const QJsonObject &body,
         bool requiresAuth,

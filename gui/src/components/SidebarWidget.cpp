@@ -1,4 +1,5 @@
 #include "SidebarWidget.h"
+#include "AvatarHelper.h"
 #include <QHBoxLayout>
 #include <QFrame>
 #include <QVariant>
@@ -9,8 +10,11 @@ SidebarWidget::SidebarWidget(QWidget *parent)
     , m_layout(nullptr)
     , m_adminBtn(nullptr)
     , m_dashboardBtn(nullptr)
+    , m_claimsBtn(nullptr)
     , m_loginBtn(nullptr)
     , m_logoutBtn(nullptr)
+    , m_profileCardBtn(nullptr)
+    , m_userAvatarLabel(nullptr)
     , m_userBadgeLabel(nullptr)
     , m_userNameLabel(nullptr)
 {
@@ -19,7 +23,7 @@ SidebarWidget::SidebarWidget(QWidget *parent)
 
 void SidebarWidget::setupUI()
 {
-    setFixedWidth(240);
+    setFixedWidth(230);
     setStyleSheet(
         "SidebarWidget {"
         "   background-color: #0F172A;"
@@ -38,15 +42,15 @@ void SidebarWidget::setupUI()
     brandLayout->setSpacing(12);
 
     QLabel *logoIcon = new QLabel("🎓", brandWidget);
-    logoIcon->setStyleSheet("font-size: 28px; background: transparent;");
+    logoIcon->setStyleSheet("font-size: 26px; background: transparent;");
     
     QVBoxLayout *brandTextLayout = new QVBoxLayout();
     brandTextLayout->setSpacing(2);
     
     QLabel *brandTitle = new QLabel("Campus Portal", brandWidget);
-    brandTitle->setStyleSheet("font-size: 16px; font-weight: 800; color: #FFFFFF; background: transparent;");
+    brandTitle->setStyleSheet("font-size: 15px; font-weight: 800; color: #FFFFFF; background: transparent;");
     
-    QLabel *brandSub = new QLabel("Lost & Found Network", brandWidget);
+    QLabel *brandSub = new QLabel("GEHU Lost & Found", brandWidget);
     brandSub->setStyleSheet("font-size: 11px; color: #818CF8; font-weight: 600; background: transparent;");
 
     brandTextLayout->addWidget(brandTitle);
@@ -56,8 +60,8 @@ void SidebarWidget::setupUI()
     brandLayout->addStretch();
     m_layout->addWidget(brandWidget);
 
-    // Section Category Label: NAVIGATION (as in reference design)
-    QLabel *navCategoryLabel = new QLabel("NAVIGATION", this);
+    // Category Label: MAIN MENU
+    QLabel *navCategoryLabel = new QLabel("MAIN MENU", this);
     navCategoryLabel->setStyleSheet(
         "font-size: 10px; font-weight: 800; color: #64748B; letter-spacing: 1.5px; background: transparent; padding-left: 6px; margin-top: 4px; margin-bottom: 2px;"
     );
@@ -71,8 +75,14 @@ void SidebarWidget::setupUI()
     // Index 2: Report Item
     m_layout->addWidget(createNavButton("Report Item", "➕", 2));
     // Index 5: Dashboard
-    m_dashboardBtn = createNavButton("Dashboard", "📊", 5);
+    m_dashboardBtn = createNavButton("My Dashboard", "📊", 5);
+    m_dashboardBtn->setVisible(false); // Shown when logged in
     m_layout->addWidget(m_dashboardBtn);
+
+    // Index 8: My Claims
+    m_claimsBtn = createNavButton("My Claims", "🎒", 8);
+    m_claimsBtn->setVisible(false); // Shown when logged in
+    m_layout->addWidget(m_claimsBtn);
 
     // Index 6: Admin Panel
     m_adminBtn = createNavButton("Admin Console", "🛡️", 6);
@@ -81,47 +91,58 @@ void SidebarWidget::setupUI()
 
     m_layout->addStretch();
 
-    // User Profile Pill Section at bottom
-    QFrame *userFrame = new QFrame(this);
-    userFrame->setStyleSheet(
-        "QFrame {"
+    // User Profile Card at bottom (Clickable trigger for Profile Dialog)
+    m_profileCardBtn = new QPushButton(this);
+    m_profileCardBtn->setCursor(Qt::PointingHandCursor);
+    m_profileCardBtn->setStyleSheet(
+        "QPushButton {"
         "   background-color: #1E293B;"
         "   border: 1px solid #334155;"
-        "   border-radius: 10px;"
+        "   border-radius: 12px;"
         "   padding: 10px;"
+        "   text-align: left;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #273549;"
+        "   border-color: #475569;"
         "}"
     );
-    QHBoxLayout *userOuterLayout = new QHBoxLayout(userFrame);
-    userOuterLayout->setContentsMargins(8, 6, 8, 6);
+    m_profileCardBtn->setToolTip("Click to view and edit profile");
+
+    QHBoxLayout *userOuterLayout = new QHBoxLayout(m_profileCardBtn);
+    userOuterLayout->setContentsMargins(4, 2, 4, 2);
     userOuterLayout->setSpacing(10);
 
-    QLabel *userIcon = new QLabel("👤", userFrame);
-    userIcon->setStyleSheet("font-size: 20px; background: transparent; color: #818CF8;");
+    m_userAvatarLabel = new QLabel(m_profileCardBtn);
+    m_userAvatarLabel->setFixedSize(36, 36);
+    m_userAvatarLabel->setStyleSheet("background: transparent; border: none;");
 
     QVBoxLayout *userLayout = new QVBoxLayout();
     userLayout->setContentsMargins(0, 0, 0, 0);
     userLayout->setSpacing(2);
 
-    m_userNameLabel = new QLabel("Guest Visitor", userFrame);
-    m_userNameLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #F8FAFC; background: transparent;");
+    m_userNameLabel = new QLabel("Guest Visitor", m_profileCardBtn);
+    m_userNameLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #F8FAFC; background: transparent; border: none;");
     
-    m_userBadgeLabel = new QLabel("Not Signed In", userFrame);
-    m_userBadgeLabel->setStyleSheet("font-size: 11px; font-weight: 500; color: #94A3B8; background: transparent;");
+    m_userBadgeLabel = new QLabel("Not Signed In", m_profileCardBtn);
+    m_userBadgeLabel->setStyleSheet("font-size: 11px; font-weight: 500; color: #94A3B8; background: transparent; border: none;");
 
     userLayout->addWidget(m_userNameLabel);
     userLayout->addWidget(m_userBadgeLabel);
-    userOuterLayout->addWidget(userIcon);
+
+    userOuterLayout->addWidget(m_userAvatarLabel);
     userOuterLayout->addLayout(userLayout);
     userOuterLayout->addStretch();
 
-    m_layout->addWidget(userFrame);
+    connect(m_profileCardBtn, &QPushButton::clicked, this, &SidebarWidget::profileClicked);
+    m_layout->addWidget(m_profileCardBtn);
 
-    // Auth Action Buttons
+    // Guest Sign In Button
     m_loginBtn = new QPushButton("Sign In", this);
     m_loginBtn->setCursor(Qt::PointingHandCursor);
     m_loginBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #6366F1;"
+        "   background-color: #4F46E5;"
         "   color: #FFFFFF;"
         "   border-radius: 8px;"
         "   padding: 10px;"
@@ -129,24 +150,25 @@ void SidebarWidget::setupUI()
         "   font-weight: 700;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4F46E5; }"
+        "QPushButton:hover { background-color: #4338CA; }"
     );
     connect(m_loginBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(3); }); // 3 = Login
     m_layout->addWidget(m_loginBtn);
 
+    // Logout Button
     m_logoutBtn = new QPushButton("Log Out", this);
     m_logoutBtn->setCursor(Qt::PointingHandCursor);
     m_logoutBtn->setStyleSheet(
         "QPushButton {"
         "   background-color: transparent;"
         "   color: #F87171;"
-        "   border: 1px solid #7F1D1D;"
+        "   border: 1px solid rgba(239, 68, 68, 0.3);"
         "   border-radius: 8px;"
         "   padding: 9px;"
-        "   font-size: 13px;"
+        "   font-size: 12px;"
         "   font-weight: 600;"
         "}"
-        "QPushButton:hover { background-color: #7F1D1D; color: #FFFFFF; }"
+        "QPushButton:hover { background-color: rgba(239, 68, 68, 0.15); color: #FCA5A5; border-color: #EF4444; }"
     );
     m_logoutBtn->setVisible(false);
     connect(m_logoutBtn, &QPushButton::clicked, this, &SidebarWidget::logoutRequested);
@@ -188,6 +210,14 @@ QPushButton* SidebarWidget::createNavButton(const QString &text, const QString &
     return btn;
 }
 
+void SidebarWidget::updateAvatar(const QString &name)
+{
+    if (!m_userAvatarLabel) return;
+    QString displayName = name.trimmed().isEmpty() ? "User" : name.trimmed();
+    QPixmap avatar = AvatarHelper::createInitialsAvatar(displayName, 36, "#6366F1");
+    m_userAvatarLabel->setPixmap(avatar);
+}
+
 void SidebarWidget::setActiveScreen(int index)
 {
     for (QPushButton *btn : m_navButtons) {
@@ -204,24 +234,32 @@ void SidebarWidget::setActiveScreen(int index)
 void SidebarWidget::updateAuthStatus(bool isLoggedIn, const QString &userName, const QString &userRole)
 {
     if (isLoggedIn) {
-        if (m_userNameLabel) m_userNameLabel->setText(userName.isEmpty() ? "Logged In User" : userName);
+        QString displayName = userName.trimmed().isEmpty() ? "Student" : userName.trimmed();
+        if (m_userNameLabel) m_userNameLabel->setText(displayName);
+        updateAvatar(displayName);
+
         if (m_userBadgeLabel) {
             if (userRole.toLower() == "admin") {
                 m_userBadgeLabel->setText("👑 Administrator");
             } else {
-                m_userBadgeLabel->setText("🎒 Student Account");
+                m_userBadgeLabel->setText("🎓 Student Account");
             }
         }
+        if (m_profileCardBtn) m_profileCardBtn->setVisible(true);
         if (m_adminBtn) m_adminBtn->setVisible(userRole.toLower() == "admin");
+        if (m_dashboardBtn) m_dashboardBtn->setVisible(true);
+        if (m_claimsBtn) m_claimsBtn->setVisible(true);
         if (m_loginBtn) m_loginBtn->setVisible(false);
         if (m_logoutBtn) m_logoutBtn->setVisible(true);
-        if (m_dashboardBtn) m_dashboardBtn->setVisible(true);
     } else {
         if (m_userNameLabel) m_userNameLabel->setText("Guest Visitor");
         if (m_userBadgeLabel) m_userBadgeLabel->setText("Not Signed In");
+        updateAvatar("Guest");
+        if (m_profileCardBtn) m_profileCardBtn->setVisible(false);
         if (m_adminBtn) m_adminBtn->setVisible(false);
+        if (m_dashboardBtn) m_dashboardBtn->setVisible(false);
+        if (m_claimsBtn) m_claimsBtn->setVisible(false);
         if (m_loginBtn) m_loginBtn->setVisible(true);
         if (m_logoutBtn) m_logoutBtn->setVisible(false);
-        if (m_dashboardBtn) m_dashboardBtn->setVisible(false);
     }
 }
