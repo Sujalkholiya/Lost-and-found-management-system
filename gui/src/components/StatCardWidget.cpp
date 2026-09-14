@@ -16,31 +16,31 @@ StatCardWidget::StatCardWidget(const QString& title, const QString& icon, ColorT
 
     QString iconBgColor, iconTextColor;
     if (theme == Emerald) {
-        iconBgColor = "#ECFDF5";
-        iconTextColor = "#059669";
+        iconBgColor = "#EAFBF4";
+        iconTextColor = "#16A66A";
     } else if (theme == Rose) {
-        iconBgColor = "#FFF1F2";
-        iconTextColor = "#E11D48";
+        iconBgColor = "#FEF2F2";
+        iconTextColor = "#EF4444";
     } else if (theme == Amber) {
-        iconBgColor = "#FFFBEB";
-        iconTextColor = "#D97706";
+        iconBgColor = "#FEF3C7";
+        iconTextColor = "#F59E0B";
     } else {
-        iconBgColor = "#EEF2FF";
-        iconTextColor = "#4F46E5";
+        iconBgColor = "#EAF2FF";
+        iconTextColor = "#2563EB";
     }
 
-    m_iconLabel->setFixedSize(40, 40);
+    m_iconLabel->setFixedSize(46, 46);
     m_iconLabel->setAlignment(Qt::AlignCenter);
     m_iconLabel->setStyleSheet(QString(
-        "background-color: %1; color: %2; font-size: 18px; font-weight: bold; border-radius: 10px;"
+        "background-color: %1; color: %2; font-size: 20px; font-weight: bold; border-radius: 23px;"
     ).arg(iconBgColor, iconTextColor));
 
-    m_valueLabel->setStyleSheet("font-size: 22px; font-weight: 800; color: #0F172A; background: transparent;");
-    m_titleLabel->setStyleSheet("font-size: 11px; font-weight: 600; color: #64748B; background: transparent;");
+    m_valueLabel->setStyleSheet("font-size: 26px; font-weight: 800; color: #172B4D; background: transparent;");
+    m_titleLabel->setStyleSheet("font-size: 12px; font-weight: 600; color: #6B7FA3; background: transparent;");
 
     QHBoxLayout* mainLayout = new QHBoxLayout(this);
-    mainLayout->setContentsMargins(16, 14, 16, 14);
-    mainLayout->setSpacing(12);
+    mainLayout->setContentsMargins(18, 16, 18, 16);
+    mainLayout->setSpacing(14);
 
     mainLayout->addWidget(m_iconLabel);
 
@@ -55,12 +55,12 @@ StatCardWidget::StatCardWidget(const QString& title, const QString& icon, ColorT
 
     setStyleSheet(
         "StatCardWidget#statCard { "
-        "  background-color: rgba(255, 255, 255, 0.92); "
-        "  border: 1px solid #E2E8F0; "
-        "  border-radius: 14px; "
+        "  background-color: #FFFFFF; "
+        "  border: 1px solid #E2EAF4; "
+        "  border-radius: 18px; "
         "}"
         "StatCardWidget#statCard:hover { "
-        "  border: 1.5px solid #CBD5E1; "
+        "  border: 1px solid #CBD5E1; "
         "  background-color: #FFFFFF; "
         "}"
     );

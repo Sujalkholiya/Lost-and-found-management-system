@@ -7,6 +7,7 @@
 #include <QGraphicsDropShadowEffect>
 #include "../network/ImageLoader.h"
 #include "../auth/AuthManager.h"
+#include "../components/Theme.h"
 
 MyClaimsScreen::MyClaimsScreen(ApiClient* apiClient, QWidget* parent)
     : QWidget(parent),
@@ -30,14 +31,14 @@ void MyClaimsScreen::setupUi()
     titleBox->setSpacing(4);
 
     QLabel* pageTitle = new QLabel("🎒 My Item Claims & Pickup Passes", this);
-    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A;");
+    pageTitle->setStyleSheet("font-size: 24px; font-weight: 700; color: " + Theme::Text::Primary + ";");
     titleBox->addWidget(pageTitle);
 
     QLabel* pageSubtitle = new QLabel(
         "Track live verification of your claimed items, view official pickup passes, and claim history.",
         this
     );
-    pageSubtitle->setStyleSheet("font-size: 13px; color: #64748B;");
+    pageSubtitle->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + ";");
     titleBox->addWidget(pageSubtitle);
 
     headerLayout->addLayout(titleBox, 1);
@@ -47,14 +48,14 @@ void MyClaimsScreen::setupUi()
     m_refreshBtn->setStyleSheet(
         "QPushButton {"
         "   background-color: #FFFFFF;"
-        "   border: 1px solid #CBD5E1;"
-        "   border-radius: 8px;"
-        "   color: #334155;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
+        "   color: " + Theme::Text::Secondary + ";"
         "   font-size: 13px;"
         "   font-weight: 600;"
         "   padding: 8px 16px;"
         "}"
-        "QPushButton:hover { background-color: #F8FAFC; border-color: #94A3B8; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; border-color: " + Theme::Primary::Border + "; color: " + Theme::Primary::Main + "; }"
     );
     connect(m_refreshBtn, &QPushButton::clicked, this, &MyClaimsScreen::loadClaims);
     headerLayout->addWidget(m_refreshBtn);
@@ -89,7 +90,7 @@ void MyClaimsScreen::setupUi()
     filterRow->addStretch();
 
     m_countLabel = new QLabel("0 claims found", this);
-    m_countLabel->setStyleSheet("font-size: 13px; font-weight: 600; color: #64748B;");
+    m_countLabel->setStyleSheet("font-size: 13px; font-weight: 500; color: " + Theme::Text::Secondary + ";");
     filterRow->addWidget(m_countLabel);
 
     rootLayout->addLayout(filterRow);
@@ -111,7 +112,7 @@ void MyClaimsScreen::setupUi()
     QVBoxLayout* loadingLayout = new QVBoxLayout(m_loadingWidget);
     loadingLayout->setAlignment(Qt::AlignCenter);
     QLabel* loadingText = new QLabel("⏳ Loading your claims from server...", m_loadingWidget);
-    loadingText->setStyleSheet("font-size: 14px; color: #64748B; font-weight: 600; padding: 40px;");
+    loadingText->setStyleSheet("font-size: 14px; color: " + Theme::Text::Secondary + "; font-weight: 600; padding: 40px;");
     loadingLayout->addWidget(loadingText);
     m_loadingWidget->hide();
     m_cardsLayout->addWidget(m_loadingWidget);
@@ -127,7 +128,7 @@ void MyClaimsScreen::setupUi()
     emptyLayout->addWidget(emptyIcon);
 
     QLabel* emptyTitle = new QLabel("No claims in this category", m_emptyWidget);
-    emptyTitle->setStyleSheet("font-size: 16px; font-weight: 700; color: #334155;");
+    emptyTitle->setStyleSheet("font-size: 16px; font-weight: 700; color: " + Theme::Text::Primary + ";");
     emptyTitle->setAlignment(Qt::AlignCenter);
     emptyLayout->addWidget(emptyTitle);
 
@@ -135,7 +136,7 @@ void MyClaimsScreen::setupUi()
         "When you find your lost property among reported items and click 'Claim Item', you can track review progress and access your official pickup pass here.",
         m_emptyWidget
     );
-    emptyDesc->setStyleSheet("font-size: 13px; color: #64748B; line-height: 140%; max-width: 480px;");
+    emptyDesc->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + "; line-height: 140%; max-width: 480px;");
     emptyDesc->setWordWrap(true);
     emptyDesc->setAlignment(Qt::AlignCenter);
     emptyLayout->addWidget(emptyDesc);
@@ -144,15 +145,15 @@ void MyClaimsScreen::setupUi()
     browseBtn->setCursor(Qt::PointingHandCursor);
     browseBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #2563EB;"
+        "   background-color: " + Theme::Primary::Main + ";"
         "   color: #FFFFFF;"
-        "   font-weight: 700;"
+        "   font-weight: 600;"
         "   font-size: 13px;"
         "   padding: 10px 22px;"
-        "   border-radius: 8px;"
+        "   border-radius: 10px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #1D4ED8; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
     );
     connect(browseBtn, &QPushButton::clicked, this, [this]() {
         emit navigateTo(1); // Browse screen index
@@ -182,27 +183,27 @@ void MyClaimsScreen::onFilterClicked(const QString& filter)
         if (active) {
             btn->setStyleSheet(
                 "QPushButton {"
-                "   background-color: #2563EB;"
+                "   background-color: " + Theme::Primary::Main + ";"
                 "   color: #FFFFFF;"
                 "   border: none;"
                 "   border-radius: 20px;"
                 "   font-size: 12px;"
-                "   font-weight: 700;"
+                "   font-weight: 600;"
                 "   padding: 7px 18px;"
                 "}"
             );
         } else {
             btn->setStyleSheet(
                 "QPushButton {"
-                "   background-color: #F1F5F9;"
-                "   color: #475569;"
-                "   border: 1px solid #E2E8F0;"
+                "   background-color: #FFFFFF;"
+                "   color: " + Theme::Text::Secondary + ";"
+                "   border: 1px solid " + Theme::Border::Default + ";"
                 "   border-radius: 20px;"
                 "   font-size: 12px;"
-                "   font-weight: 600;"
+                "   font-weight: 500;"
                 "   padding: 7px 18px;"
                 "}"
-                "QPushButton:hover { background-color: #E2E8F0; }"
+                "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; color: " + Theme::Primary::Main + "; border-color: " + Theme::Primary::Border + "; }"
             );
         }
     };
@@ -286,8 +287,8 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
     card->setStyleSheet(
         "QFrame#claimCard {"
         "   background-color: #FFFFFF;"
-        "   border: 1px solid #E2E8F0;"
-        "   border-radius: 14px;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 16px;"
         "}"
     );
     card->setObjectName("claimCard");
@@ -302,7 +303,7 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
 
     QLabel* refBadge = new QLabel(QString("🏷️ %1").arg(claim.claimReference), card);
     refBadge->setStyleSheet(
-        "background-color: #F1F5F9; color: #0F172A; font-family: monospace; font-size: 13px; font-weight: 800; padding: 5px 10px; border-radius: 6px; border: 1px solid #CBD5E1;"
+        "background-color: " + Theme::Background::Page + "; color: " + Theme::Text::Primary + "; font-family: monospace; font-size: 13px; font-weight: 700; padding: 5px 10px; border-radius: 6px; border: 1px solid " + Theme::Border::Default + ";"
     );
     topBar->addWidget(refBadge);
 
@@ -316,7 +317,7 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
 
     if (!claim.createdAt.isEmpty()) {
         QLabel* dateLabel = new QLabel(QString("🕒 Submitted: %1").arg(claim.createdAt), card);
-        dateLabel->setStyleSheet("font-size: 12px; color: #64748B;");
+        dateLabel->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + ";");
         topBar->addWidget(dateLabel);
     }
     cardLayout->addLayout(topBar);
@@ -328,7 +329,7 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
     if (claim.hasImage()) {
         QLabel* imgLabel = new QLabel(card);
         imgLabel->setFixedSize(68, 68);
-        imgLabel->setStyleSheet("background-color: #F1F5F9; border-radius: 8px; border: 1px solid #CBD5E1;");
+        imgLabel->setStyleSheet("background-color: #F8FAFC; border-radius: 10px; border: 1px solid " + Theme::Border::Default + ";");
         imgLabel->setAlignment(Qt::AlignCenter);
         ImageLoader::instance().loadIntoLabel(claim.itemImageUrl(), imgLabel, QSize(68, 68));
         itemRow->addWidget(imgLabel);
@@ -338,11 +339,11 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
     itemDetails->setSpacing(4);
 
     QLabel* itemTitle = new QLabel(claim.itemTitle.isEmpty() ? QString("Item #%1").arg(claim.itemId) : claim.itemTitle, card);
-    itemTitle->setStyleSheet("font-size: 16px; font-weight: 800; color: #0F172A;");
+    itemTitle->setStyleSheet("font-size: 16px; font-weight: 700; color: " + Theme::Text::Primary + ";");
     itemDetails->addWidget(itemTitle);
 
     QLabel* itemLoc = new QLabel(QString("📍 Found Location: <b>%1</b>").arg(claim.itemLocation), card);
-    itemLoc->setStyleSheet("font-size: 13px; color: #475569;");
+    itemLoc->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + ";");
     itemDetails->addWidget(itemLoc);
 
     itemRow->addLayout(itemDetails, 1);
@@ -350,20 +351,20 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
 
     // 3. User's Submitted Verification Summary
     QFrame* answersBox = new QFrame(card);
-    answersBox->setStyleSheet("background-color: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 10px; padding: 10px;");
+    answersBox->setStyleSheet("background-color: #F8FAFC; border: 1px solid " + Theme::Border::Default + "; border-radius: 12px; padding: 12px;");
     QVBoxLayout* answersLayout = new QVBoxLayout(answersBox);
     answersLayout->setSpacing(6);
 
     QLabel* q1 = new QLabel(QString("<b>Where last seen:</b> %1").arg(claim.lastSeenLocation), answersBox);
-    q1->setStyleSheet("font-size: 12px; color: #334155;");
+    q1->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + ";");
     answersLayout->addWidget(q1);
 
     QLabel* q2 = new QLabel(QString("<b>Unique features provided:</b> %1").arg(claim.uniqueIdentifyingDetails), answersBox);
-    q2->setStyleSheet("font-size: 12px; color: #334155;");
+    q2->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + ";");
     answersLayout->addWidget(q2);
 
     QLabel* q3 = new QLabel(QString("<b>Contents:</b> %1").arg(claim.itemContents), answersBox);
-    q3->setStyleSheet("font-size: 12px; color: #334155;");
+    q3->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + ";");
     answersLayout->addWidget(q3);
 
     cardLayout->addWidget(answersBox);
@@ -372,7 +373,7 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
     if (claim.isPending()) {
         // Timeline & Pending Notice
         QFrame* timelineBox = new QFrame(card);
-        timelineBox->setStyleSheet("background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 12px;");
+        timelineBox->setStyleSheet("background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 12px;");
         QVBoxLayout* tlLayout = new QVBoxLayout(timelineBox);
         tlLayout->setSpacing(10);
 
@@ -430,9 +431,9 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
         passBox->setStyleSheet(
             "QFrame {"
             "   background-color: #ECFDF5;"
-            "   border: 1.5px dashed #059669;"
-            "   border-radius: 12px;"
-            "   padding: 14px;"
+            "   border: 1.5px dashed #10B981;"
+            "   border-radius: 14px;"
+            "   padding: 16px;"
             "}"
         );
         QVBoxLayout* passLayout = new QVBoxLayout(passBox);
@@ -440,11 +441,11 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
 
         QHBoxLayout* passHeader = new QHBoxLayout();
         QLabel* passTitle = new QLabel("🎫 OFFICIAL CAMPUS PICKUP PASS", passBox);
-        passTitle->setStyleSheet("font-size: 14px; font-weight: 800; color: #065F46; letter-spacing: 0.5px;");
+        passTitle->setStyleSheet("font-size: 13px; font-weight: 700; color: #065F46; letter-spacing: 0.5px;");
         passHeader->addWidget(passTitle);
         passHeader->addStretch();
         QLabel* passState = new QLabel("STATUS: READY FOR PICKUP", passBox);
-        passState->setStyleSheet("background-color: #059669; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px;");
+        passState->setStyleSheet("background-color: #10B981; color: #FFFFFF; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px;");
         passHeader->addWidget(passState);
         passLayout->addLayout(passHeader);
 
@@ -459,7 +460,7 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
 
         infoGrid->addWidget(new QLabel("<b>Pickup Location:</b>", passBox), 0, 0);
         QLabel* locVal = new QLabel(claim.pickupLocation.isEmpty() ? "Admin Block - Room 102" : claim.pickupLocation, passBox);
-        locVal->setStyleSheet("color: #065F46; font-weight: bold; font-size: 13px;");
+        locVal->setStyleSheet("color: #065F46; font-weight: 700; font-size: 13px;");
         infoGrid->addWidget(locVal, 0, 1);
 
         infoGrid->addWidget(new QLabel("<b>Office Hours:</b>", passBox), 1, 0);
@@ -487,7 +488,7 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
     else if (claim.isRejected()) {
         // Rejection explanation box
         QFrame* rejBox = new QFrame(card);
-        rejBox->setStyleSheet("background-color: #FEF2F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 12px;");
+        rejBox->setStyleSheet("background-color: #FEF2F2; border: 1px solid #FECDD3; border-radius: 12px; padding: 12px;");
         QVBoxLayout* rejLayout = new QVBoxLayout(rejBox);
         rejLayout->setSpacing(6);
 
@@ -514,7 +515,7 @@ QWidget* MyClaimsScreen::createClaimCard(const Claim& claim)
     else if (claim.isHandedOver()) {
         // Completed return record
         QFrame* compBox = new QFrame(card);
-        compBox->setStyleSheet("background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 12px;");
+        compBox->setStyleSheet("background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 12px;");
         QVBoxLayout* compLayout = new QVBoxLayout(compBox);
         compLayout->setSpacing(6);
 

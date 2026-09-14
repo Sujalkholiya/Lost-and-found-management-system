@@ -18,6 +18,7 @@ SOURCES += \
     src/network/ApiClient.cpp \
     src/components/NavbarWidget.cpp \
     src/components/SidebarWidget.cpp \
+    src/components/ProfileImageManager.cpp \
     src/components/ItemCardWidget.cpp \
     src/components/StatCardWidget.cpp \
     src/components/ToastWidget.cpp \
@@ -46,6 +47,8 @@ HEADERS += \
     src/network/ApiClient.h \
     src/network/ImageLoader.h \
     src/components/AvatarHelper.h \
+    src/components/ProfileImageManager.h \
+    src/components/Theme.h \
     src/components/NavbarWidget.h \
     src/components/SidebarWidget.h \
     src/components/ItemCardWidget.h \

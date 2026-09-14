@@ -1,5 +1,6 @@
 #include "ItemDetailsDialog.h"
 #include "ClaimFormDialog.h"
+#include "../components/Theme.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -63,7 +64,7 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
 
     // Title
     QLabel* titleLabel = new QLabel(item.title, this);
-    titleLabel->setStyleSheet("font-size: 22px; font-weight: 800; color: #0F172A;");
+    titleLabel->setStyleSheet("font-size: 22px; font-weight: 700; color: " + Theme::Text::Primary + ";");
     titleLabel->setWordWrap(true);
     layout->addWidget(titleLabel);
 
@@ -74,8 +75,8 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
         imageLabel->setAlignment(Qt::AlignCenter);
         imageLabel->setStyleSheet(
             "QLabel {"
-            "   background-color: #F1F5F9;"
-            "   border: 1px solid #CBD5E1;"
+            "   background-color: #F8FAFC;"
+            "   border: 1px solid " + Theme::Border::Default + ";"
             "   border-radius: 12px;"
             "}"
         );
@@ -86,43 +87,43 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
 
     // Metadata Row
     QFrame* metaBox = new QFrame(this);
-    metaBox->setStyleSheet("background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px;");
+    metaBox->setStyleSheet("background-color: #F8FAFC; border: 1px solid " + Theme::Border::Default + "; border-radius: 12px; padding: 14px;");
     QVBoxLayout* metaLayout = new QVBoxLayout(metaBox);
     metaLayout->setSpacing(8);
 
     QLabel* locLabel = new QLabel(QString("📍 <b>Location:</b> %1").arg(item.location), metaBox);
-    locLabel->setStyleSheet("font-size: 13px; color: #334155;");
+    locLabel->setStyleSheet("font-size: 13px; color: " + Theme::Text::Primary + ";");
     metaLayout->addWidget(locLabel);
 
     QLabel* userLabel = new QLabel(QString("👤 <b>Reported by:</b> User #%1").arg(item.userId), metaBox);
-    userLabel->setStyleSheet("font-size: 13px; color: #334155;");
+    userLabel->setStyleSheet("font-size: 13px; color: " + Theme::Text::Primary + ";");
     metaLayout->addWidget(userLabel);
 
     if (!item.createdAt.isEmpty()) {
         QLabel* dateLabel = new QLabel(QString("🕒 <b>Date:</b> %1").arg(item.createdAt), metaBox);
-        dateLabel->setStyleSheet("font-size: 13px; color: #334155;");
+        dateLabel->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + ";");
         metaLayout->addWidget(dateLabel);
     }
     layout->addWidget(metaBox);
 
     // Description Section
     QLabel* descTitle = new QLabel("Description", this);
-    descTitle->setStyleSheet("font-size: 13px; font-weight: bold; color: #64748B; text-transform: uppercase;");
+    descTitle->setStyleSheet("font-size: 11px; font-weight: 700; color: " + Theme::Text::Secondary + "; text-transform: uppercase; letter-spacing: 0.5px;");
     layout->addWidget(descTitle);
 
     QLabel* descLabel = new QLabel(item.description, this);
-    descLabel->setStyleSheet("font-size: 14px; color: #1E293B; line-height: 140%;");
+    descLabel->setStyleSheet("font-size: 14px; color: " + Theme::Text::Primary + "; line-height: 140%;");
     descLabel->setWordWrap(true);
     layout->addWidget(descLabel);
 
     // Campus Safety Guidelines box
     QFrame* guideBox = new QFrame(this);
-    guideBox->setStyleSheet("background-color: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 10px; padding: 10px;");
+    guideBox->setStyleSheet("background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; padding: 12px;");
     QVBoxLayout* guideLayout = new QVBoxLayout(guideBox);
     QLabel* guideTitle = new QLabel("🛡️ Campus Recovery Guideline", guideBox);
-    guideTitle->setStyleSheet("font-size: 12px; font-weight: bold; color: #3730A3;");
+    guideTitle->setStyleSheet("font-size: 12px; font-weight: 700; color: #1D4ED8;");
     QLabel* guideText = new QLabel("All item handovers are coordinated through the Admin Block campus security desk after identity verification.", guideBox);
-    guideText->setStyleSheet("font-size: 11px; color: #4338CA;");
+    guideText->setStyleSheet("font-size: 12px; color: #2563EB;");
     guideText->setWordWrap(true);
     guideLayout->addWidget(guideTitle);
     guideLayout->addWidget(guideText);
@@ -158,7 +159,7 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
             "   color: #DC2626;"
             "   border: 1px solid #FECDD3;"
             "   border-radius: 10px;"
-            "   font-weight: bold;"
+            "   font-weight: 600;"
             "   font-size: 13px;"
             "   padding: 10px 18px;"
             "}"
@@ -180,30 +181,30 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
         if (isReturned) {
             m_claimBtn->setText("✓ Item Returned to Owner");
             m_claimBtn->setEnabled(false);
-            m_claimBtn->setStyleSheet("background-color: #E2E8F0; color: #64748B; border: none; border-radius: 10px; padding: 10px 18px; font-weight: bold;");
+            m_claimBtn->setStyleSheet("background-color: #E2E8F0; color: #64748B; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600;");
         } else if (!AuthManager::instance().isLoggedIn()) {
             m_claimBtn->setText("🔒 Sign In to Claim");
-            m_claimBtn->setStyleSheet("background-color: #F1F5F9; color: #334155; border: 1px solid #CBD5E1; border-radius: 10px; padding: 10px 18px; font-weight: bold;");
+            m_claimBtn->setStyleSheet("background-color: #FFFFFF; color: " + Theme::Text::Secondary + "; border: 1px solid " + Theme::Border::Default + "; border-radius: 10px; padding: 10px 18px; font-weight: 600;");
             connect(m_claimBtn, &QPushButton::clicked, this, [this]() {
                 QMessageBox::information(this, "Sign In Required", "Please sign in to your student account to claim this item.");
             });
         } else if (currentUserId == m_item.userId) {
             m_claimBtn->setText("You Reported This Item");
             m_claimBtn->setEnabled(false);
-            m_claimBtn->setStyleSheet("background-color: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 18px; font-weight: bold;");
+            m_claimBtn->setStyleSheet("background-color: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 18px; font-weight: 600;");
         } else {
             m_claimBtn->setText("🎯 Claim This Item");
             m_claimBtn->setStyleSheet(
                 "QPushButton {"
-                "   background-color: #2563EB;"
+                "   background-color: " + Theme::Primary::Main + ";"
                 "   color: #FFFFFF;"
-                "   font-weight: bold;"
+                "   font-weight: 600;"
                 "   font-size: 13px;"
                 "   padding: 10px 20px;"
                 "   border-radius: 10px;"
                 "   border: none;"
                 "}"
-                "QPushButton:hover { background-color: #1D4ED8; }"
+                "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
                 "QPushButton:disabled { background-color: #CBD5E1; color: #64748B; }"
             );
             connect(m_claimBtn, &QPushButton::clicked, this, &ItemDetailsDialog::onClaimClicked);
@@ -216,15 +217,15 @@ ItemDetailsDialog::ItemDetailsDialog(const Item& item, ApiClient* apiClient, QWi
     closeBtn->setCursor(Qt::PointingHandCursor);
     closeBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #F1F5F9;"
-        "   color: #334155;"
-        "   font-weight: bold;"
+        "   background-color: #FFFFFF;"
+        "   color: " + Theme::Text::Secondary + ";"
+        "   font-weight: 600;"
         "   font-size: 13px;"
         "   padding: 10px 24px;"
         "   border-radius: 10px;"
-        "   border: 1px solid #CBD5E1;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
         "}"
-        "QPushButton:hover { background-color: #E2E8F0; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; color: " + Theme::Primary::Main + "; border-color: " + Theme::Primary::Border + "; }"
     );
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
     btnLayout->addWidget(closeBtn);

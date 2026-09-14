@@ -7,6 +7,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include "../network/ImageLoader.h"
+#include "../components/Theme.h"
 
 AdminClaimReviewDialog::AdminClaimReviewDialog(const Claim& claim, ApiClient* apiClient, QWidget* parent)
     : QDialog(parent),
@@ -49,11 +50,11 @@ void AdminClaimReviewDialog::setupUi()
     titleBox->setSpacing(4);
 
     QLabel* refTitle = new QLabel(QString("Claim Verification: %1").arg(m_claim.claimReference), this);
-    refTitle->setStyleSheet("font-size: 20px; font-weight: 800; color: #0F172A; font-family: monospace;");
+    refTitle->setStyleSheet("font-size: 20px; font-weight: 700; color: " + Theme::Text::Primary + "; font-family: monospace;");
     titleBox->addWidget(refTitle);
 
     QLabel* subTitle = new QLabel("Campus Security Lost & Found Verification Console", this);
-    subTitle->setStyleSheet("font-size: 12px; color: #64748B;");
+    subTitle->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + ";");
     titleBox->addWidget(subTitle);
 
     header->addLayout(titleBox, 1);
@@ -68,36 +69,36 @@ void AdminClaimReviewDialog::setupUi()
 
     // 2. Claimant Details Card
     QFrame* claimantCard = new QFrame(this);
-    claimantCard->setStyleSheet("background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px;");
+    claimantCard->setStyleSheet("background-color: #F8FAFC; border: 1px solid " + Theme::Border::Default + "; border-radius: 12px; padding: 14px;");
     QGridLayout* claimantGrid = new QGridLayout(claimantCard);
     claimantGrid->setHorizontalSpacing(20);
     claimantGrid->setVerticalSpacing(6);
 
     claimantGrid->addWidget(new QLabel("<b>Claimant Name:</b>", claimantCard), 0, 0);
     QLabel* nameVal = new QLabel(m_claim.claimantName.isEmpty() ? QString("User #%1").arg(m_claim.userId) : m_claim.claimantName, claimantCard);
-    nameVal->setStyleSheet("color: #0F172A; font-weight: bold;");
+    nameVal->setStyleSheet("color: " + Theme::Text::Primary + "; font-weight: 700;");
     claimantGrid->addWidget(nameVal, 0, 1);
 
     claimantGrid->addWidget(new QLabel("<b>Email:</b>", claimantCard), 0, 2);
     QLabel* emailVal = new QLabel(m_claim.claimantEmail.isEmpty() ? "N/A" : m_claim.claimantEmail, claimantCard);
-    emailVal->setStyleSheet("color: #2563EB;");
+    emailVal->setStyleSheet("color: " + Theme::Primary::Main + "; font-weight: 600;");
     claimantGrid->addWidget(emailVal, 0, 3);
 
     claimantGrid->addWidget(new QLabel("<b>Submitted At:</b>", claimantCard), 1, 0);
     QLabel* dateVal = new QLabel(m_claim.createdAt, claimantCard);
-    dateVal->setStyleSheet("color: #475569;");
+    dateVal->setStyleSheet("color: " + Theme::Text::Secondary + ";");
     claimantGrid->addWidget(dateVal, 1, 1);
 
     claimantGrid->addWidget(new QLabel("<b>Target Item:</b>", claimantCard), 1, 2);
     QLabel* itemVal = new QLabel(QString("#%1: %2").arg(m_claim.itemId).arg(m_claim.itemTitle), claimantCard);
-    itemVal->setStyleSheet("color: #475569; font-weight: bold;");
+    itemVal->setStyleSheet("color: " + Theme::Text::Primary + "; font-weight: 600;");
     claimantGrid->addWidget(itemVal, 1, 3);
 
     layout->addWidget(claimantCard);
 
     // 3. Side-by-Side Comparison Header
     QLabel* compHeader = new QLabel("Side-by-Side Verification Analysis", this);
-    compHeader->setStyleSheet("font-size: 15px; font-weight: bold; color: #1E293B; margin-top: 6px;");
+    compHeader->setStyleSheet("font-size: 15px; font-weight: 700; color: " + Theme::Text::Primary + "; margin-top: 6px;");
     layout->addWidget(compHeader);
 
     QHBoxLayout* comparisonLayout = new QHBoxLayout();
@@ -105,28 +106,28 @@ void AdminClaimReviewDialog::setupUi()
 
     // Column 1: Item Record
     QFrame* itemBox = new QFrame(this);
-    itemBox->setStyleSheet("background-color: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px; padding: 14px;");
+    itemBox->setStyleSheet("background-color: #F8FAFC; border: 1px solid " + Theme::Border::Default + "; border-radius: 14px; padding: 16px;");
     QVBoxLayout* itemLayout = new QVBoxLayout(itemBox);
     itemLayout->setSpacing(10);
 
     QLabel* itemHeader = new QLabel("📦 Reported Item Record", itemBox);
-    itemHeader->setStyleSheet("font-size: 14px; font-weight: bold; color: #334155;");
+    itemHeader->setStyleSheet("font-size: 14px; font-weight: 700; color: " + Theme::Text::Primary + ";");
     itemLayout->addWidget(itemHeader);
 
     if (m_claim.hasImage()) {
         QLabel* imgLabel = new QLabel(itemBox);
         imgLabel->setFixedHeight(140);
         imgLabel->setAlignment(Qt::AlignCenter);
-        imgLabel->setStyleSheet("background-color: #E2E8F0; border-radius: 8px;");
+        imgLabel->setStyleSheet("background-color: #FFFFFF; border: 1px solid " + Theme::Border::Default + "; border-radius: 8px;");
         ImageLoader::instance().loadIntoLabel(m_claim.itemImageUrl(), imgLabel, QSize(300, 140));
         itemLayout->addWidget(imgLabel);
     }
 
     auto addFieldBox = [](QVBoxLayout* l, const QString& label, const QString& val) {
         QLabel* lbl = new QLabel(label);
-        lbl->setStyleSheet("font-size: 11px; font-weight: bold; color: #64748B; text-transform: uppercase;");
+        lbl->setStyleSheet("font-size: 11px; font-weight: 700; color: " + Theme::Text::Secondary + "; text-transform: uppercase; letter-spacing: 0.5px;");
         QLabel* v = new QLabel(val.isEmpty() ? "None recorded" : val);
-        v->setStyleSheet("font-size: 13px; color: #0F172A; line-height: 130%;");
+        v->setStyleSheet("font-size: 13px; color: " + Theme::Text::Primary + "; line-height: 130%;");
         v->setWordWrap(true);
         l->addWidget(lbl);
         l->addWidget(v);
@@ -142,12 +143,12 @@ void AdminClaimReviewDialog::setupUi()
 
     // Column 2: Claimant's Answers
     QFrame* answersBox = new QFrame(this);
-    answersBox->setStyleSheet("background-color: #EFF6FF; border: 1.5px solid #93C5FD; border-radius: 12px; padding: 14px;");
+    answersBox->setStyleSheet("background-color: #EFF6FF; border: 1.5px solid #BFDBFE; border-radius: 14px; padding: 16px;");
     QVBoxLayout* answersLayout = new QVBoxLayout(answersBox);
     answersLayout->setSpacing(10);
 
     QLabel* answersHeader = new QLabel("👤 Claimant's Verification Answers", answersBox);
-    answersHeader->setStyleSheet("font-size: 14px; font-weight: bold; color: #1E40AF;");
+    answersHeader->setStyleSheet("font-size: 14px; font-weight: 700; color: #1D4ED8;");
     answersLayout->addWidget(answersHeader);
 
     addFieldBox(answersLayout, "Where Last Seen / Lost", m_claim.lastSeenLocation);
@@ -163,19 +164,21 @@ void AdminClaimReviewDialog::setupUi()
 
     // 4. Action & Handover Section
     QFrame* actionBox = new QFrame(this);
-    actionBox->setStyleSheet("background-color: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin-top: 8px;");
+    actionBox->setStyleSheet("background-color: #F8FAFC; border: 1px solid " + Theme::Border::Default + "; border-radius: 14px; padding: 18px; margin-top: 8px;");
     QVBoxLayout* actionLayout = new QVBoxLayout(actionBox);
     actionLayout->setSpacing(12);
 
     if (m_claim.isPending()) {
         QLabel* actTitle = new QLabel("Admin Review Decision", actionBox);
-        actTitle->setStyleSheet("font-size: 14px; font-weight: bold; color: #1E293B;");
+        actTitle->setStyleSheet("font-size: 14px; font-weight: 700; color: " + Theme::Text::Primary + ";");
         actionLayout->addWidget(actTitle);
 
         QHBoxLayout* locRow = new QHBoxLayout();
-        locRow->addWidget(new QLabel("Pickup Location:", actionBox));
+        QLabel* locPrompt = new QLabel("Pickup Location:", actionBox);
+        locPrompt->setStyleSheet("color: " + Theme::Text::Secondary + "; font-size: 13px; font-weight: 600;");
+        locRow->addWidget(locPrompt);
         m_pickupLocationEdit = new QLineEdit(m_claim.pickupLocation.isEmpty() ? "Admin Block - Room 102" : m_claim.pickupLocation, actionBox);
-        m_pickupLocationEdit->setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px; font-size: 13px;");
+        m_pickupLocationEdit->setStyleSheet("background: white; border: 1px solid " + Theme::Border::Default + "; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: " + Theme::Text::Primary + ";");
         locRow->addWidget(m_pickupLocationEdit, 1);
         actionLayout->addLayout(locRow);
 
@@ -187,12 +190,12 @@ void AdminClaimReviewDialog::setupUi()
         m_rejectBtn->setStyleSheet(
             "QPushButton {"
             "   background-color: #FEF2F2;"
-            "   color: #DC2626;"
+            "   color: " + Theme::Status::Error + ";"
             "   border: 1px solid #FECDD3;"
             "   font-size: 13px;"
-            "   font-weight: bold;"
+            "   font-weight: 600;"
             "   padding: 10px 18px;"
-            "   border-radius: 8px;"
+            "   border-radius: 10px;"
             "}"
             "QPushButton:hover { background-color: #DC2626; color: white; }"
         );
@@ -203,15 +206,15 @@ void AdminClaimReviewDialog::setupUi()
         m_approveBtn->setCursor(Qt::PointingHandCursor);
         m_approveBtn->setStyleSheet(
             "QPushButton {"
-            "   background-color: #059669;"
+            "   background-color: #10B981;"
             "   color: #FFFFFF;"
             "   font-size: 13px;"
-            "   font-weight: bold;"
+            "   font-weight: 600;"
             "   padding: 10px 22px;"
-            "   border-radius: 8px;"
+            "   border-radius: 10px;"
             "   border: none;"
             "}"
-            "QPushButton:hover { background-color: #047857; }"
+            "QPushButton:hover { background-color: #059669; }"
         );
         connect(m_approveBtn, &QPushButton::clicked, this, &AdminClaimReviewDialog::onApproveClicked);
         btns->addWidget(m_approveBtn, 1);
@@ -220,14 +223,14 @@ void AdminClaimReviewDialog::setupUi()
     }
     else if (m_claim.isApproved()) {
         QLabel* actTitle = new QLabel("Physical Handover & Return Verification", actionBox);
-        actTitle->setStyleSheet("font-size: 14px; font-weight: bold; color: #065F46;");
+        actTitle->setStyleSheet("font-size: 14px; font-weight: 700; color: #065F46;");
         actionLayout->addWidget(actTitle);
 
         QLabel* instr = new QLabel(
             "This claim was approved. When the student visits the counter, verify their Student ID card against this claim reference. Once handed over, check the box below to mark the item as returned in the university system.",
             actionBox
         );
-        instr->setStyleSheet("font-size: 12px; color: #334155;");
+        instr->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + ";");
         instr->setWordWrap(true);
         actionLayout->addWidget(instr);
 
@@ -235,7 +238,7 @@ void AdminClaimReviewDialog::setupUi()
             "I confirm that the claimant presented valid student ID and the physical item was handed over in person.",
             actionBox
         );
-        m_handoverConfirmCheck->setStyleSheet("font-size: 12px; font-weight: bold; color: #0F172A; margin: 4px 0;");
+        m_handoverConfirmCheck->setStyleSheet("font-size: 12px; font-weight: 600; color: " + Theme::Text::Primary + "; margin: 4px 0;");
         actionLayout->addWidget(m_handoverConfirmCheck);
 
         QHBoxLayout* handBtns = new QHBoxLayout();
@@ -244,7 +247,7 @@ void AdminClaimReviewDialog::setupUi()
         m_rejectBtn = new QPushButton("✕ Reject (Failed ID Check)", actionBox);
         m_rejectBtn->setCursor(Qt::PointingHandCursor);
         m_rejectBtn->setStyleSheet(
-            "QPushButton { background: #FEF2F2; color: #DC2626; border: 1px solid #FECDD3; padding: 10px 16px; border-radius: 8px; font-weight: bold; }"
+            "QPushButton { background: #FEF2F2; color: " + Theme::Status::Error + "; border: 1px solid #FECDD3; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; }"
             "QPushButton:hover { background: #DC2626; color: white; }"
         );
         connect(m_rejectBtn, &QPushButton::clicked, this, &AdminClaimReviewDialog::onRejectClicked);
@@ -255,15 +258,15 @@ void AdminClaimReviewDialog::setupUi()
         m_handoverBtn->setEnabled(false);
         m_handoverBtn->setStyleSheet(
             "QPushButton {"
-            "   background-color: #2563EB;"
+            "   background-color: " + Theme::Primary::Main + ";"
             "   color: #FFFFFF;"
             "   font-size: 13px;"
-            "   font-weight: bold;"
+            "   font-weight: 600;"
             "   padding: 10px 22px;"
-            "   border-radius: 8px;"
+            "   border-radius: 10px;"
             "   border: none;"
             "}"
-            "QPushButton:hover { background-color: #1D4ED8; }"
+            "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
             "QPushButton:disabled { background-color: #CBD5E1; color: #94A3B8; }"
         );
         connect(m_handoverConfirmCheck, &QCheckBox::toggled, m_handoverBtn, &QPushButton::setEnabled);
@@ -291,15 +294,15 @@ void AdminClaimReviewDialog::setupUi()
     closeBtn->setCursor(Qt::PointingHandCursor);
     closeBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #F1F5F9;"
-        "   color: #475569;"
-        "   border: 1px solid #CBD5E1;"
-        "   border-radius: 8px;"
+        "   background-color: #FFFFFF;"
+        "   color: " + Theme::Text::Secondary + ";"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
         "   font-size: 13px;"
         "   font-weight: 600;"
         "   padding: 10px 20px;"
         "}"
-        "QPushButton:hover { background-color: #E2E8F0; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; color: " + Theme::Primary::Main + "; border-color: " + Theme::Primary::Border + "; }"
     );
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
     layout->addWidget(closeBtn, 0, Qt::AlignRight);

@@ -41,12 +41,13 @@ void HomeScreen::setupUI()
     layout->setContentsMargins(36, 24, 36, 36);
     layout->setSpacing(24);
 
-    // 1. HERO / WELCOME SECTION (matching reference design)
+    // 1. HERO / WELCOME SECTION (matching reference design: soft light-blue SaaS card)
     QFrame *heroBanner = new QFrame(contentWidget);
     heroBanner->setObjectName("heroBanner");
     heroBanner->setStyleSheet(
         "QFrame#heroBanner {"
-        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4F46E5, stop:0.45 #4338CA, stop:1 #312E81);"
+        "   background-color: #EEF5FF;"
+        "   border: 1px solid #DCE7F6;"
         "   border-radius: 20px;"
         "}"
     );
@@ -60,13 +61,13 @@ void HomeScreen::setupUI()
 
     QLabel *heroTag = new QLabel("• CAMPUS NETWORK ACTIVE", heroBanner);
     heroTag->setStyleSheet(
-        "color: #FFFFFF; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; "
-        "background-color: rgba(255, 255, 255, 0.18); border-radius: 12px; padding: 4px 12px;"
+        "color: #2563EB; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; "
+        "background-color: #EAF2FF; border-radius: 12px; padding: 4px 12px;"
     );
     heroTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     QLabel *heroTitle = new QLabel("Lost something?\nFound something?\nWe can help.", heroBanner);
-    heroTitle->setStyleSheet("color: #FFFFFF; font-size: 28px; font-weight: 800; line-height: 120%; background: transparent;");
+    heroTitle->setStyleSheet("color: #17345F; font-size: 28px; font-weight: 800; line-height: 120%; background: transparent;");
     heroTitle->setWordWrap(true);
 
     QLabel *heroSub = new QLabel(
@@ -74,7 +75,7 @@ void HomeScreen::setupUI()
         "discover found items, and help return property to its rightful owner.",
         heroBanner
     );
-    heroSub->setStyleSheet("color: #E0E7FF; font-size: 13px; line-height: 140%; background: transparent;");
+    heroSub->setStyleSheet("color: #6B7FA3; font-size: 13px; line-height: 140%; background: transparent;");
     heroSub->setWordWrap(true);
 
     // Navigation Buttons
@@ -85,15 +86,15 @@ void HomeScreen::setupUI()
     browseBtn->setCursor(Qt::PointingHandCursor);
     browseBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #FFFFFF;"
-        "   color: #4338CA;"
+        "   background-color: #2563EB;"
+        "   color: #FFFFFF;"
         "   font-weight: 700;"
         "   font-size: 13px;"
-        "   padding: 9px 18px;"
+        "   padding: 10px 20px;"
         "   border-radius: 8px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #F8FAFC; }"
+        "QPushButton:hover { background-color: #1D4ED8; }"
     );
     connect(browseBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(1); }); // 1 = Browse
 
@@ -101,15 +102,15 @@ void HomeScreen::setupUI()
     reportLostBtn->setCursor(Qt::PointingHandCursor);
     reportLostBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: rgba(255, 255, 255, 0.14);"
-        "   color: #FFFFFF;"
+        "   background-color: #FFFFFF;"
+        "   color: #17345F;"
         "   font-weight: 700;"
         "   font-size: 13px;"
-        "   padding: 9px 16px;"
+        "   padding: 10px 18px;"
         "   border-radius: 8px;"
-        "   border: 1px solid rgba(255, 255, 255, 0.28);"
+        "   border: 1px solid #CBD5E1;"
         "}"
-        "QPushButton:hover { background-color: rgba(255, 255, 255, 0.22); }"
+        "QPushButton:hover { background-color: #F8FAFC; border-color: #2563EB; color: #2563EB; }"
     );
     connect(reportLostBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(2); }); // 2 = Report
 
@@ -117,15 +118,15 @@ void HomeScreen::setupUI()
     reportFoundBtn->setCursor(Qt::PointingHandCursor);
     reportFoundBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: rgba(255, 255, 255, 0.14);"
-        "   color: #FFFFFF;"
+        "   background-color: #FFFFFF;"
+        "   color: #17345F;"
         "   font-weight: 700;"
         "   font-size: 13px;"
-        "   padding: 9px 16px;"
+        "   padding: 10px 18px;"
         "   border-radius: 8px;"
-        "   border: 1px solid rgba(255, 255, 255, 0.28);"
+        "   border: 1px solid #CBD5E1;"
         "}"
-        "QPushButton:hover { background-color: rgba(255, 255, 255, 0.22); }"
+        "QPushButton:hover { background-color: #F8FAFC; border-color: #2563EB; color: #2563EB; }"
     );
     connect(reportFoundBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(2); }); // 2 = Report
 
@@ -133,15 +134,15 @@ void HomeScreen::setupUI()
     m_authNavBtn->setCursor(Qt::PointingHandCursor);
     m_authNavBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: rgba(255, 255, 255, 0.10);"
-        "   color: #FFFFFF;"
+        "   background-color: #FFFFFF;"
+        "   color: #17345F;"
         "   font-weight: 700;"
         "   font-size: 13px;"
-        "   padding: 9px 16px;"
+        "   padding: 10px 18px;"
         "   border-radius: 8px;"
-        "   border: 1px solid rgba(255, 255, 255, 0.22);"
+        "   border: 1px solid #CBD5E1;"
         "}"
-        "QPushButton:hover { background-color: rgba(255, 255, 255, 0.20); }"
+        "QPushButton:hover { background-color: #F8FAFC; border-color: #2563EB; color: #2563EB; }"
     );
     connect(m_authNavBtn, &QPushButton::clicked, this, [this]() {
         if (AuthManager::instance().isLoggedIn()) {
@@ -164,17 +165,17 @@ void HomeScreen::setupUI()
     heroLeftLayout->addLayout(navButtonsLayout);
     heroRow->addLayout(heroLeftLayout, 3);
 
-    // Right Decorative Card (backpack visual matching IMAGE 1)
+    // Right Decorative Card (backpack visual matching design reference)
     QVBoxLayout *heroRightLayout = new QVBoxLayout();
     heroRightLayout->setAlignment(Qt::AlignCenter);
 
     QFrame *badgeBox = new QFrame(heroBanner);
-    badgeBox->setFixedSize(100, 100);
+    badgeBox->setFixedSize(104, 104);
     badgeBox->setStyleSheet(
         "QFrame {"
-        "   background-color: rgba(255, 255, 255, 0.12);"
-        "   border: 1px solid rgba(255, 255, 255, 0.22);"
-        "   border-radius: 18px;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid #DCE7F6;"
+        "   border-radius: 20px;"
         "}"
     );
     QVBoxLayout *badgeBoxLayout = new QVBoxLayout(badgeBox);
@@ -182,12 +183,12 @@ void HomeScreen::setupUI()
     badgeBoxLayout->setContentsMargins(0, 0, 0, 0);
 
     QLabel *bagIcon = new QLabel("🎒", badgeBox);
-    bagIcon->setStyleSheet("font-size: 42px; background: transparent;");
+    bagIcon->setStyleSheet("font-size: 44px; background: transparent;");
     bagIcon->setAlignment(Qt::AlignCenter);
     badgeBoxLayout->addWidget(bagIcon);
 
     QLabel *badgeCaption = new QLabel("Campus Property Network", heroBanner);
-    badgeCaption->setStyleSheet("font-size: 11px; font-weight: 600; color: #C7D2FE; background: transparent; margin-top: 6px;");
+    badgeCaption->setStyleSheet("font-size: 11px; font-weight: 600; color: #6B7FA3; background: transparent; margin-top: 6px;");
     badgeCaption->setAlignment(Qt::AlignCenter);
 
     heroRightLayout->addWidget(badgeBox, 0, Qt::AlignCenter);
@@ -198,7 +199,7 @@ void HomeScreen::setupUI()
 
     // 2. REAL STATISTICS KPI SECTION: CAMPUS OVERVIEW
     QLabel *overviewSectionLabel = new QLabel("CAMPUS OVERVIEW", contentWidget);
-    overviewSectionLabel->setStyleSheet("font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 1.5px; background: transparent;");
+    overviewSectionLabel->setStyleSheet("font-size: 12px; font-weight: 800; color: #6B7FA3; letter-spacing: 1.5px; background: transparent;");
     layout->addWidget(overviewSectionLabel);
 
     m_totalCard = new StatCardWidget("Total Listed Items", "📦", StatCardWidget::Indigo, contentWidget);
@@ -207,7 +208,7 @@ void HomeScreen::setupUI()
     m_weekCard = new StatCardWidget("Reports This Week", "📋", StatCardWidget::Amber, contentWidget);
 
     QHBoxLayout *statsLayout = new QHBoxLayout();
-    statsLayout->setSpacing(14);
+    statsLayout->setSpacing(16);
     statsLayout->addWidget(m_totalCard);
     statsLayout->addWidget(m_lostCard);
     statsLayout->addWidget(m_foundCard);
@@ -217,11 +218,11 @@ void HomeScreen::setupUI()
     // 3. RECENT ITEMS SECTION: RECENT ITEM ACTIVITY
     QHBoxLayout *recentHeader = new QHBoxLayout();
     QLabel *recentTitle = new QLabel("RECENT ITEM ACTIVITY", contentWidget);
-    recentTitle->setStyleSheet("font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 1.5px; background: transparent;");
+    recentTitle->setStyleSheet("font-size: 12px; font-weight: 800; color: #6B7FA3; letter-spacing: 1.5px; background: transparent;");
 
     QPushButton *viewAllBtn = new QPushButton("View all →", contentWidget);
     viewAllBtn->setCursor(Qt::PointingHandCursor);
-    viewAllBtn->setStyleSheet("background: transparent; color: #4F46E5; font-size: 12px; font-weight: 700; border: none;");
+    viewAllBtn->setStyleSheet("background: transparent; color: #2563EB; font-size: 13px; font-weight: 700; border: none;");
     connect(viewAllBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(1); }); // 1 = Browse
 
     recentHeader->addWidget(recentTitle);

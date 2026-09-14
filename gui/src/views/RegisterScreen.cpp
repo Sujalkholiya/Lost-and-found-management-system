@@ -1,4 +1,5 @@
 #include "RegisterScreen.h"
+#include "../components/Theme.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFrame>
@@ -35,14 +36,14 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
 
     QFrame *card = new QFrame(scrollContent);
     card->setFixedWidth(460);
-    card->setStyleSheet(
+    card->setStyleSheet(QString(
         "QFrame#registerCard {"
-        "   background-color: rgba(255, 255, 255, 0.95);"
-        "   border: 1px solid #E2E8F0;"
+        "   background-color: %1;"
+        "   border: 1px solid %2;"
         "   border-radius: 18px;"
         "   padding: 32px;"
         "}"
-    );
+    ).arg(Theme::Background::Card, Theme::Border::Default));
     card->setObjectName("registerCard");
 
     QVBoxLayout *layout = new QVBoxLayout(card);
@@ -51,18 +52,18 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     // Top Navigation: Back to Home
     m_backBtn = new QPushButton("← Back to Home", card);
     m_backBtn->setCursor(Qt::PointingHandCursor);
-    m_backBtn->setStyleSheet(
+    m_backBtn->setStyleSheet(QString(
         "QPushButton {"
         "   background: transparent;"
-        "   color: #64748B;"
+        "   color: %1;"
         "   font-size: 13px;"
         "   font-weight: 600;"
         "   border: none;"
         "   text-align: left;"
         "   padding: 0;"
         "}"
-        "QPushButton:hover { color: #4F46E5; }"
-    );
+        "QPushButton:hover { color: %2; }"
+    ).arg(Theme::Text::Secondary, Theme::Primary::Main));
     connect(m_backBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(0); });
     layout->addWidget(m_backBtn);
     layout->addSpacing(2);
@@ -73,11 +74,11 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     icon->setAlignment(Qt::AlignCenter);
 
     QLabel *title = new QLabel("Create Your Account", card);
-    title->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A; background: transparent;");
+    title->setStyleSheet(QString("font-size: 24px; font-weight: 800; color: %1; background: transparent;").arg(Theme::Text::Primary));
     title->setAlignment(Qt::AlignCenter);
 
     QLabel *subtitle = new QLabel("Join the Campus Lost & Found Network.", card);
-    subtitle->setStyleSheet("font-size: 13px; color: #64748B; background: transparent;");
+    subtitle->setStyleSheet(QString("font-size: 13px; color: %1; background: transparent;").arg(Theme::Text::Secondary));
     subtitle->setAlignment(Qt::AlignCenter);
 
     layout->addWidget(icon);
@@ -85,30 +86,31 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     layout->addWidget(subtitle);
     layout->addSpacing(6);
 
-    QString inputStyle =
+    QString inputStyle = QString(
         "QLineEdit {"
-        "   background-color: #FFFFFF;"
-        "   color: #0F172A;"
-        "   border: 1.5px solid #CBD5E1;"
+        "   background-color: %1;"
+        "   color: %2;"
+        "   border: 1px solid %3;"
         "   border-radius: 8px;"
         "   padding: 10px 14px;"
         "   font-size: 13px;"
         "   font-weight: 500;"
-        "   selection-background-color: #4F46E5;"
+        "   selection-background-color: %4;"
         "   selection-color: #FFFFFF;"
         "}"
-        "QLineEdit:hover { border-color: #94A3B8; }"
+        "QLineEdit:hover { border-color: #CBD5E1; }"
         "QLineEdit:focus {"
-        "   border: 2px solid #4F46E5;"
+        "   border: 2px solid %4;"
         "   background-color: #FFFFFF;"
-        "   color: #0F172A;"
-        "}";
+        "   color: %2;"
+        "}"
+    ).arg(Theme::Background::Card, Theme::Text::Primary, Theme::Border::Default, Theme::Primary::Main);
 
     // 1. Full Name
     QVBoxLayout *nameBlock = new QVBoxLayout();
     nameBlock->setSpacing(6);
     QLabel *nameLabel = new QLabel("Full Name", card);
-    nameLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #334155; background: transparent;");
+    nameLabel->setStyleSheet(QString("font-size: 13px; font-weight: 700; color: %1; background: transparent;").arg(Theme::Text::Primary));
     m_nameEdit = new QLineEdit(card);
     m_nameEdit->setPlaceholderText("Enter your full name");
     m_nameEdit->setStyleSheet(inputStyle);
@@ -120,7 +122,7 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     QVBoxLayout *emailBlock = new QVBoxLayout();
     emailBlock->setSpacing(6);
     QLabel *emailLabel = new QLabel("Email", card);
-    emailLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #334155; background: transparent;");
+    emailLabel->setStyleSheet(QString("font-size: 13px; font-weight: 700; color: %1; background: transparent;").arg(Theme::Text::Primary));
     m_emailEdit = new QLineEdit(card);
     m_emailEdit->setPlaceholderText("Enter your college email");
     m_emailEdit->setStyleSheet(inputStyle);
@@ -132,7 +134,7 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     QVBoxLayout *passBlock = new QVBoxLayout();
     passBlock->setSpacing(4);
     QLabel *passLabel = new QLabel("Password", card);
-    passLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #334155; background: transparent;");
+    passLabel->setStyleSheet(QString("font-size: 13px; font-weight: 700; color: %1; background: transparent;").arg(Theme::Text::Primary));
     
     QWidget *passContainer = new QWidget(card);
     QHBoxLayout *passLayout = new QHBoxLayout(passContainer);
@@ -148,24 +150,24 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     m_showPassBtn->setCursor(Qt::PointingHandCursor);
     m_showPassBtn->setFixedWidth(64);
     m_showPassBtn->setFixedHeight(40);
-    m_showPassBtn->setStyleSheet(
+    m_showPassBtn->setStyleSheet(QString(
         "QPushButton {"
-        "   background-color: #F1F5F9;"
-        "   color: #475569;"
+        "   background-color: %1;"
+        "   color: %2;"
         "   font-size: 12px;"
         "   font-weight: 700;"
-        "   border: 1.5px solid #CBD5E1;"
+        "   border: 1px solid %3;"
         "   border-radius: 8px;"
         "}"
-        "QPushButton:hover { background-color: #E2E8F0; color: #0F172A; }"
-    );
+        "QPushButton:hover { background-color: %4; color: %5; }"
+    ).arg(Theme::Background::Card, Theme::Text::Secondary, Theme::Border::Default, Theme::Background::Muted, Theme::Text::Primary));
     connect(m_showPassBtn, &QPushButton::clicked, this, &RegisterScreen::togglePasswordVisibility);
 
     passLayout->addWidget(m_passwordEdit, 1);
     passLayout->addWidget(m_showPassBtn);
 
     QLabel *passHint = new QLabel("8+ characters • 1 letter • 1 number", card);
-    passHint->setStyleSheet("font-size: 11px; font-weight: 500; color: #64748B; background: transparent; margin-top: 2px;");
+    passHint->setStyleSheet(QString("font-size: 11px; font-weight: 500; color: %1; background: transparent; margin-top: 2px;").arg(Theme::Text::Muted));
 
     passBlock->addWidget(passLabel);
     passBlock->addWidget(passContainer);
@@ -176,7 +178,7 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     QVBoxLayout *confBlock = new QVBoxLayout();
     confBlock->setSpacing(6);
     QLabel *confLabel = new QLabel("Confirm Password", card);
-    confLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #334155; background: transparent;");
+    confLabel->setStyleSheet(QString("font-size: 13px; font-weight: 700; color: %1; background: transparent;").arg(Theme::Text::Primary));
     m_confirmPassEdit = new QLineEdit(card);
     m_confirmPassEdit->setEchoMode(QLineEdit::Password);
     m_confirmPassEdit->setPlaceholderText("Re-enter your password");
@@ -189,7 +191,7 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     QVBoxLayout *phoneBlock = new QVBoxLayout();
     phoneBlock->setSpacing(6);
     QLabel *phoneLabel = new QLabel("Phone Number (Optional)", card);
-    phoneLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #334155; background: transparent;");
+    phoneLabel->setStyleSheet(QString("font-size: 13px; font-weight: 700; color: %1; background: transparent;").arg(Theme::Text::Primary));
     m_phoneEdit = new QLineEdit(card);
     m_phoneEdit->setPlaceholderText("+91 XXXXX XXXXX");
     m_phoneEdit->setStyleSheet(inputStyle);
@@ -199,17 +201,17 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
 
     // 6. Error Alert Box
     m_errorLabel = new QLabel(card);
-    m_errorLabel->setStyleSheet(
+    m_errorLabel->setStyleSheet(QString(
         "QLabel {"
-        "   background-color: #FEF2F2;"
-        "   color: #DC2626;"
+        "   background-color: %1;"
+        "   color: %2;"
         "   border: 1px solid #FECDD3;"
         "   border-radius: 8px;"
         "   padding: 10px 14px;"
         "   font-size: 12px;"
         "   font-weight: 600;"
         "}"
-    );
+    ).arg(Theme::Status::ErrorBg, Theme::Status::ErrorText));
     m_errorLabel->setWordWrap(true);
     m_errorLabel->hide();
     layout->addWidget(m_errorLabel);
@@ -218,18 +220,18 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     m_registerBtn = new QPushButton("Create Account", card);
     m_registerBtn->setCursor(Qt::PointingHandCursor);
     m_registerBtn->setFixedHeight(44);
-    m_registerBtn->setStyleSheet(
+    m_registerBtn->setStyleSheet(QString(
         "QPushButton {"
-        "   background-color: #4F46E5;"
+        "   background-color: %1;"
         "   color: #FFFFFF;"
-        "   font-weight: 800;"
+        "   font-weight: 700;"
         "   font-size: 14px;"
         "   border-radius: 8px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4338CA; }"
-        "QPushButton:disabled { background-color: #A5B4FC; color: #FFFFFF; }"
-    );
+        "QPushButton:hover { background-color: %2; }"
+        "QPushButton:disabled { background-color: #93C5FD; color: #FFFFFF; }"
+    ).arg(Theme::Primary::Main, Theme::Primary::Dark));
     connect(m_registerBtn, &QPushButton::clicked, this, &RegisterScreen::handleRegister);
     connect(m_confirmPassEdit, &QLineEdit::returnPressed, this, &RegisterScreen::handleRegister);
     connect(m_phoneEdit, &QLineEdit::returnPressed, this, &RegisterScreen::handleRegister);
@@ -238,20 +240,20 @@ RegisterScreen::RegisterScreen(ApiClient *apiClient, QWidget *parent)
     // 8. Login Link Footer
     QHBoxLayout *footLayout = new QHBoxLayout();
     QLabel *footText = new QLabel("Already have an account?", card);
-    footText->setStyleSheet("font-size: 13px; color: #64748B; background: transparent;");
+    footText->setStyleSheet(QString("font-size: 13px; color: %1; background: transparent;").arg(Theme::Text::Secondary));
     
     m_loginLink = new QPushButton("Sign In", card);
     m_loginLink->setCursor(Qt::PointingHandCursor);
-    m_loginLink->setStyleSheet(
+    m_loginLink->setStyleSheet(QString(
         "QPushButton {"
         "   background: transparent;"
-        "   color: #4F46E5;"
+        "   color: %1;"
         "   font-size: 13px;"
-        "   font-weight: 800;"
+        "   font-weight: 700;"
         "   border: none;"
         "}"
         "QPushButton:hover { text-decoration: underline; }"
-    );
+    ).arg(Theme::Primary::Main));
     connect(m_loginLink, &QPushButton::clicked, this, [this]() { emit navigateTo(3); }); // 3 = Login
 
     footLayout->addStretch();

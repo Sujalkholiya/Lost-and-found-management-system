@@ -30,69 +30,69 @@ ItemCardWidget::ItemCardWidget(const Item &item, QWidget *parent)
     if (isLost) {
         m_typeBadge->setStyleSheet(
             "background-color: #FEF2F2;"
-            "color: #DC2626;"
+            "color: #EF4444;"
             "font-size: 10px;"
             "font-weight: 800;"
-            "padding: 3px 10px;"
+            "padding: 4px 10px;"
             "border-radius: 10px;"
             "border: 1px solid #FECDD3;"
         );
     } else {
         m_typeBadge->setStyleSheet(
-            "background-color: #ECFDF5;"
-            "color: #059669;"
+            "background-color: #EAFBF4;"
+            "color: #16A66A;"
             "font-size: 10px;"
             "font-weight: 800;"
-            "padding: 3px 10px;"
+            "padding: 4px 10px;"
             "border-radius: 10px;"
             "border: 1px solid #A7F3D0;"
         );
     }
 
     // 2. Typography
-    m_titleLabel->setStyleSheet("font-size: 15px; font-weight: 800; color: #0F172A; background: transparent;");
+    m_titleLabel->setStyleSheet("font-size: 15px; font-weight: 800; color: #172B4D; background: transparent;");
     m_titleLabel->setWordWrap(true);
 
-    m_descLabel->setStyleSheet("font-size: 12px; color: #64748B; background: transparent; line-height: 130%;");
+    m_descLabel->setStyleSheet("font-size: 12px; color: #6B7FA3; background: transparent; line-height: 130%;");
     m_descLabel->setWordWrap(true);
     m_descLabel->setMaximumHeight(36);
 
     m_locationLabel->setStyleSheet(
         "font-size: 11px;"
         "font-weight: 600;"
-        "color: #475569;"
-        "background-color: #F1F5F9;"
-        "padding: 4px 8px;"
+        "color: #6B7FA3;"
+        "background-color: #F4F8FF;"
+        "padding: 4px 10px;"
         "border-radius: 6px;"
-        "border: 1px solid #E2E8F0;"
+        "border: 1px solid #E2EAF4;"
     );
 
     m_userLabel->setStyleSheet(
         "font-size: 11px;"
         "font-weight: 600;"
-        "color: #64748B;"
-        "background-color: #F1F5F9;"
-        "padding: 3px 8px;"
+        "color: #172B4D;"
+        "background-color: #F4F8FF;"
+        "padding: 4px 10px;"
         "border-radius: 6px;"
-        "border: 1px solid #E2E8F0;"
+        "border: 1px solid #E2EAF4;"
     );
 
     // 3. CTA Button
     m_detailsBtn->setCursor(Qt::PointingHandCursor);
     m_detailsBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #EEF2FF;"
-        "   color: #4F46E5;"
-        "   border: 1px solid #C7D2FE;"
-        "   border-radius: 6px;"
+        "   background-color: #EFF6FF;"
+        "   color: #2563EB;"
+        "   border: 1px solid #BFDBFE;"
+        "   border-radius: 8px;"
         "   font-size: 11px;"
         "   font-weight: 700;"
-        "   padding: 5px 12px;"
+        "   padding: 6px 14px;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #4F46E5;"
+        "   background-color: #2563EB;"
         "   color: #FFFFFF;"
-        "   border: 1px solid #4338CA;"
+        "   border: 1px solid #2563EB;"
         "}"
     );
 
@@ -105,17 +105,17 @@ ItemCardWidget::ItemCardWidget(const Item &item, QWidget *parent)
     m_deleteBtn->setStyleSheet(
         "QPushButton {"
         "   background-color: #FEF2F2;"
-        "   color: #DC2626;"
+        "   color: #EF4444;"
         "   border: 1px solid #FECDD3;"
-        "   border-radius: 6px;"
+        "   border-radius: 8px;"
         "   font-size: 11px;"
         "   font-weight: 700;"
-        "   padding: 5px 10px;"
+        "   padding: 6px 12px;"
         "}"
         "QPushButton:hover {"
-        "   background-color: #DC2626;"
+        "   background-color: #EF4444;"
         "   color: #FFFFFF;"
-        "   border: 1px solid #B91C1C;"
+        "   border: 1px solid #DC2626;"
         "}"
     );
 
@@ -201,12 +201,12 @@ ItemCardWidget::ItemCardWidget(const Item &item, QWidget *parent)
 
     setStyleSheet(
         "ItemCardWidget#itemCard {"
-        "   background-color: rgba(255, 255, 255, 0.94);"
-        "   border: 1px solid #E2E8F0;"
-        "   border-radius: 14px;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid #E2EAF4;"
+        "   border-radius: 18px;"
         "}"
         "ItemCardWidget#itemCard:hover {"
-        "   border: 1.5px solid #6366F1;"
+        "   border: 1.5px solid #3B82F6;"
         "   background-color: #FFFFFF;"
         "}"
     );

@@ -1,5 +1,7 @@
 #include "NavbarWidget.h"
 #include "AvatarHelper.h"
+#include "ProfileImageManager.h"
+#include "../auth/AuthManager.h"
 #include <QFrame>
 #include <QVBoxLayout>
 #include <QStyle>
@@ -23,21 +25,27 @@ NavbarWidget::NavbarWidget(QWidget *parent)
     , m_logoutBtn(nullptr)
 {
     setupUI();
+
+    connect(&ProfileImageManager::instance(), &ProfileImageManager::profileImageChanged, this, [this](int userId) {
+        Q_UNUSED(userId);
+        User u = AuthManager::instance().currentUser();
+        updateAvatar(u.name);
+    });
 }
 
 void NavbarWidget::setupUI()
 {
-    setFixedHeight(64);
+    setFixedHeight(78);
     setStyleSheet(
         "NavbarWidget {"
-        "   background-color: rgba(255, 255, 255, 0.92);"
-        "   border-bottom: 1px solid rgba(226, 232, 240, 0.95);"
+        "   background-color: #FFFFFF;"
+        "   border-bottom: 1px solid #E2EAF4;"
         "   font-family: 'Segoe UI', -apple-system, sans-serif;"
         "}"
     );
 
     QHBoxLayout *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(28, 0, 28, 0);
+    layout->setContentsMargins(32, 0, 32, 0);
     layout->setSpacing(0);
 
     // ==========================================
@@ -50,13 +58,13 @@ void NavbarWidget::setupUI()
     brandLayout->setAlignment(Qt::AlignVCenter);
 
     m_brandTitle = new QLabel("Campus Lost & Found", brandWidget);
-    m_brandTitle->setStyleSheet("font-size: 15px; font-weight: 800; color: #0F172A; background: transparent;");
+    m_brandTitle->setStyleSheet("font-size: 15px; font-weight: 800; color: #17345F; background: transparent;");
 
     QLabel *brandDot = new QLabel("•", brandWidget);
-    brandDot->setStyleSheet("font-size: 14px; font-weight: 700; color: #94A3B8; background: transparent;");
+    brandDot->setStyleSheet("font-size: 14px; font-weight: 700; color: #8A9AB5; background: transparent;");
 
     QLabel *brandSub = new QLabel("University Portal", brandWidget);
-    brandSub->setStyleSheet("font-size: 12px; font-weight: 600; color: #64748B; background: transparent;");
+    brandSub->setStyleSheet("font-size: 12px; font-weight: 600; color: #6B7FA3; background: transparent;");
 
     brandLayout->addWidget(m_brandTitle);
     brandLayout->addWidget(brandDot);
@@ -70,7 +78,7 @@ void NavbarWidget::setupUI()
     layout->addStretch(1);
 
     // ==========================================
-    // 2. CENTER: Navigation Buttons (Pill style)
+    // 2. CENTER: Navigation Buttons (Soft Blue Pill style)
     // ==========================================
     QWidget *centerNavWidget = new QWidget(this);
     QHBoxLayout *centerNavLayout = new QHBoxLayout(centerNavWidget);
@@ -85,15 +93,15 @@ void NavbarWidget::setupUI()
     QString navBtnStyle =
         "QPushButton {"
         "   background: transparent;"
-        "   color: #475569;"
+        "   color: #6B7FA3;"
         "   font-size: 13px;"
         "   font-weight: 600;"
         "   padding: 8px 18px;"
         "   border-radius: 8px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: rgba(241, 245, 249, 0.9); color: #0F172A; }"
-        "QPushButton[active='true'] { background-color: #EEF2FF; color: #4F46E5; font-weight: 700; }";
+        "QPushButton:hover { background-color: #F4F8FF; color: #2563EB; }"
+        "QPushButton[active='true'] { background-color: #EFF5FF; color: #2563EB; font-weight: 700; }";
 
     m_homeQuickBtn->setStyleSheet(navBtnStyle);
     m_browseQuickBtn->setStyleSheet(navBtnStyle);
@@ -127,7 +135,7 @@ void NavbarWidget::setupUI()
     m_authContainer = new QWidget(rightAccountWidget);
     QHBoxLayout *authLayout = new QHBoxLayout(m_authContainer);
     authLayout->setContentsMargins(0, 0, 0, 0);
-    authLayout->setSpacing(26); // Exactly 24-28 px clean separation between Profile and Logout
+    authLayout->setSpacing(24);
     authLayout->setAlignment(Qt::AlignVCenter);
 
     // Profile Trigger Frame
@@ -142,8 +150,8 @@ void NavbarWidget::setupUI()
         "   padding: 4px 10px 4px 4px;"
         "}"
         "QFrame#profileTrigger:hover {"
-        "   background-color: rgba(241, 245, 249, 0.9);"
-        "   border: 1px solid #E2E8F0;"
+        "   background-color: #F4F8FF;"
+        "   border: 1px solid #E2EAF4;"
         "}"
     );
     profileTrigger->setToolTip("Click to view and edit profile");
@@ -155,9 +163,9 @@ void NavbarWidget::setupUI()
     profLayout->setSpacing(10); // 10-12 px gap between avatar and text
     profLayout->setAlignment(Qt::AlignVCenter);
 
-    // Fixed-size 40x40 circular avatar
+    // Fixed-size 48x48 circular avatar (within 46-54 px range)
     m_avatarLabel = new QLabel(profileTrigger);
-    m_avatarLabel->setFixedSize(40, 40);
+    m_avatarLabel->setFixedSize(48, 48);
     m_avatarLabel->setAlignment(Qt::AlignCenter);
     m_avatarLabel->setStyleSheet("background: transparent; border: none;");
 
@@ -170,17 +178,17 @@ void NavbarWidget::setupUI()
     textLayout->setAlignment(Qt::AlignVCenter);
 
     m_userLabel = new QLabel("User", textContainer);
-    m_userLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #0F172A; background: transparent; border: none;");
+    m_userLabel->setStyleSheet("font-size: 13px; font-weight: 700; color: #172B4D; background: transparent; border: none;");
 
     m_roleBadge = new QLabel("Student", textContainer);
-    m_roleBadge->setStyleSheet("font-size: 11px; font-weight: 600; color: #64748B; background: transparent; border: none;");
+    m_roleBadge->setStyleSheet("font-size: 11px; font-weight: 600; color: #6B7FA3; background: transparent; border: none;");
 
     textLayout->addWidget(m_userLabel);
     textLayout->addWidget(m_roleBadge);
 
     // Dropdown arrow
     QLabel *arrowLabel = new QLabel("▾", profileTrigger);
-    arrowLabel->setStyleSheet("font-size: 11px; color: #94A3B8; font-weight: bold; background: transparent; border: none; margin-left: 2px;");
+    arrowLabel->setStyleSheet("font-size: 11px; color: #8A9AB5; font-weight: bold; background: transparent; border: none; margin-left: 2px;");
     arrowLabel->setAlignment(Qt::AlignVCenter);
 
     profLayout->addWidget(m_avatarLabel);
@@ -193,14 +201,14 @@ void NavbarWidget::setupUI()
     m_logoutBtn->setStyleSheet(
         "QPushButton {"
         "   background-color: transparent;"
-        "   color: #DC2626;"
+        "   color: #EF4444;"
         "   font-size: 12px;"
-        "   font-weight: 700;"
+        "   font-weight: 600;"
         "   padding: 7px 16px;"
         "   border: 1px solid #FECDD3;"
         "   border-radius: 8px;"
         "}"
-        "QPushButton:hover { background-color: #FEE2E2; color: #B91C1C; border-color: #FCA5A5; }"
+        "QPushButton:hover { background-color: #FEF2F2; color: #DC2626; border-color: #FCA5A5; }"
     );
     connect(m_logoutBtn, &QPushButton::clicked, this, &NavbarWidget::logoutRequested);
 
@@ -219,15 +227,15 @@ void NavbarWidget::setupUI()
     m_signInBtn->setCursor(Qt::PointingHandCursor);
     m_signInBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: rgba(255, 255, 255, 0.9);"
-        "   color: #334155;"
+        "   background-color: #FFFFFF;"
+        "   color: #172B4D;"
         "   font-size: 12px;"
         "   font-weight: 700;"
         "   padding: 8px 16px;"
-        "   border: 1px solid #CBD5E1;"
+        "   border: 1px solid #E2EAF4;"
         "   border-radius: 8px;"
         "}"
-        "QPushButton:hover { background-color: #FFFFFF; color: #0F172A; border-color: #94A3B8; }"
+        "QPushButton:hover { background-color: #F4F8FF; color: #2563EB; border-color: #CBD5E1; }"
     );
     connect(m_signInBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(3); }); // 3 = Login
 
@@ -235,7 +243,7 @@ void NavbarWidget::setupUI()
     m_registerBtn->setCursor(Qt::PointingHandCursor);
     m_registerBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4F46E5;"
+        "   background-color: #2563EB;"
         "   color: #FFFFFF;"
         "   font-size: 12px;"
         "   font-weight: 700;"
@@ -243,7 +251,7 @@ void NavbarWidget::setupUI()
         "   border-radius: 8px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4338CA; }"
+        "QPushButton:hover { background-color: #1D4ED8; }"
     );
     connect(m_registerBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(4); }); // 4 = Register
 
@@ -270,8 +278,9 @@ bool NavbarWidget::eventFilter(QObject *watched, QEvent *event)
 void NavbarWidget::updateAvatar(const QString &name)
 {
     if (!m_avatarLabel) return;
-    QString displayName = name.trimmed().isEmpty() ? "User" : name.trimmed();
-    QPixmap avatar = AvatarHelper::createInitialsAvatar(displayName, 40, "#4F46E5");
+    User u = AuthManager::instance().currentUser();
+    QString displayName = name.trimmed().isEmpty() ? u.name : name.trimmed();
+    QPixmap avatar = ProfileImageManager::instance().getCircularAvatar(u.id, displayName, 48, "#2563EB");
     m_avatarLabel->setPixmap(avatar);
 }
 

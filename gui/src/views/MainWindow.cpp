@@ -27,6 +27,10 @@ protected:
         QPainter painter(this);
         painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
+        // Solid clean light page background
+        painter.fillRect(rect(), QColor("#F7FAFE"));
+
+        // Extremely subtle, low-opacity watermark of the campus backdrop
         if (!m_bgPixmap.isNull()) {
             QSize scaledSize = m_bgPixmap.size();
             scaledSize.scale(size(), Qt::KeepAspectRatioByExpanding);
@@ -34,13 +38,10 @@ protected:
             int x = (width() - scaledSize.width()) / 2;
             int y = (height() - scaledSize.height()) / 2;
 
+            painter.setOpacity(0.06);
             painter.drawPixmap(x, y, scaledSize.width(), scaledSize.height(), m_bgPixmap);
-        } else {
-            painter.fillRect(rect(), QColor("#F1F5F9"));
+            painter.setOpacity(1.0);
         }
-
-        // Soft translucent neutral overlay over campus image for strong text contrast
-        painter.fillRect(rect(), QColor(248, 250, 252, 215));
     }
 
 private:
@@ -100,6 +101,8 @@ void MainWindow::setupUI()
 
     qDebug() << "[MainWindow] setupUI: Creating central widget & root layout...";
     QWidget *centralWidget = new QWidget(this);
+    centralWidget->setObjectName("centralWidget");
+    centralWidget->setStyleSheet("#centralWidget { background-color: #F7FAFE; }");
     setCentralWidget(centralWidget);
 
     QHBoxLayout *rootLayout = new QHBoxLayout(centralWidget);
@@ -209,6 +212,7 @@ void MainWindow::setupConnections()
     connect(m_dashboardScreen, &DashboardScreen::navigateTo, this, &MainWindow::onNavigate);
     connect(m_dashboardScreen, &DashboardScreen::showToast, this, &MainWindow::onShowToast);
     connect(m_dashboardScreen, &DashboardScreen::viewItemDetails, this, &MainWindow::onShowItemDetails);
+    connect(m_dashboardScreen, &DashboardScreen::profileClicked, this, &MainWindow::onOpenProfileDialog);
 
     connect(m_adminScreen, &AdminScreen::showToast, this, &MainWindow::onShowToast);
 

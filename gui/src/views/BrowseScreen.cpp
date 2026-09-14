@@ -43,10 +43,10 @@ void BrowseScreen::setupUI()
     titleLayout->setSpacing(2);
 
     QLabel *pageTitle = new QLabel("Browse Campus Items", this);
-    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A; background: transparent;");
+    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #17345F; background: transparent;");
 
     QLabel *pageSubtitle = new QLabel("Search and filter all reported lost and found belongings across the university.", this);
-    pageSubtitle->setStyleSheet("font-size: 13px; color: #64748B; font-weight: 500; background: transparent;");
+    pageSubtitle->setStyleSheet("font-size: 13px; color: #6B7FA3; font-weight: 500; background: transparent;");
 
     titleLayout->addWidget(pageTitle);
     titleLayout->addWidget(pageSubtitle);
@@ -57,15 +57,15 @@ void BrowseScreen::setupUI()
     reportNewBtn->setCursor(Qt::PointingHandCursor);
     reportNewBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #6366F1;"
+        "   background-color: #2563EB;"
         "   color: #FFFFFF;"
         "   font-weight: 700;"
         "   font-size: 13px;"
-        "   padding: 9px 18px;"
+        "   padding: 10px 18px;"
         "   border-radius: 8px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4F46E5; }"
+        "QPushButton:hover { background-color: #1D4ED8; }"
     );
     connect(reportNewBtn, &QPushButton::clicked, this, [this]() { emit navigateTo(2); }); // 2 = Report
     headerLayout->addWidget(reportNewBtn);
@@ -76,8 +76,8 @@ void BrowseScreen::setupUI()
     QFrame *filterCard = new QFrame(this);
     filterCard->setStyleSheet(
         "QFrame#filterCard {"
-        "   background-color: rgba(255, 255, 255, 0.94);"
-        "   border: 1px solid #E2E8F0;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid #E2EAF4;"
         "   border-radius: 14px;"
         "   padding: 4px;"
         "}"
@@ -94,17 +94,17 @@ void BrowseScreen::setupUI()
     m_searchEdit->setStyleSheet(
         "QLineEdit {"
         "   background-color: #F8FAFC;"
-        "   border: 1.5px solid #CBD5E1;"
+        "   border: 1px solid #E2EAF4;"
         "   border-radius: 8px;"
         "   padding: 8px 14px;"
         "   font-size: 13px;"
         "   font-weight: 500;"
-        "   color: #0F172A;"
-        "   selection-background-color: #4F46E5;"
+        "   color: #172B4D;"
+        "   selection-background-color: #2563EB;"
         "   selection-color: #FFFFFF;"
         "}"
-        "QLineEdit:hover { border-color: #94A3B8; }"
-        "QLineEdit:focus { border: 2px solid #4F46E5; background-color: #FFFFFF; color: #0F172A; }"
+        "QLineEdit:hover { border-color: #CBD5E1; }"
+        "QLineEdit:focus { border: 2px solid #2563EB; background-color: #FFFFFF; color: #172B4D; }"
     );
     m_searchEdit->setMinimumWidth(260);
 
@@ -130,20 +130,20 @@ void BrowseScreen::setupUI()
     m_locationCombo->setStyleSheet(
         "QComboBox {"
         "   background-color: #F8FAFC;"
-        "   border: 1.5px solid #CBD5E1;"
+        "   border: 1px solid #E2EAF4;"
         "   border-radius: 8px;"
         "   padding: 8px 12px;"
         "   font-size: 12px;"
         "   font-weight: 600;"
-        "   color: #334155;"
+        "   color: #172B4D;"
         "}"
-        "QComboBox:hover { border-color: #94A3B8; }"
-        "QComboBox:focus { border: 2px solid #4F46E5; }"
+        "QComboBox:hover { border-color: #CBD5E1; }"
+        "QComboBox:focus { border: 2px solid #2563EB; }"
         "QComboBox QAbstractItemView {"
         "   background-color: #FFFFFF;"
-        "   color: #0F172A;"
-        "   border: 1px solid #CBD5E1;"
-        "   selection-background-color: #4F46E5;"
+        "   color: #172B4D;"
+        "   border: 1px solid #E2EAF4;"
+        "   selection-background-color: #2563EB;"
         "   selection-color: #FFFFFF;"
         "   outline: none;"
         "   padding: 4px;"
@@ -151,14 +151,14 @@ void BrowseScreen::setupUI()
         "QComboBox QAbstractItemView::item {"
         "   min-height: 28px;"
         "   padding: 4px 8px;"
-        "   color: #0F172A;"
+        "   color: #172B4D;"
         "}"
         "QComboBox QAbstractItemView::item:hover {"
-        "   background-color: #EEF2FF;"
-        "   color: #4F46E5;"
+        "   background-color: #EAF2FF;"
+        "   color: #2563EB;"
         "}"
         "QComboBox QAbstractItemView::item:selected {"
-        "   background-color: #4F46E5;"
+        "   background-color: #2563EB;"
         "   color: #FFFFFF;"
         "}"
     );
@@ -168,15 +168,15 @@ void BrowseScreen::setupUI()
     m_resetBtn->setCursor(Qt::PointingHandCursor);
     m_resetBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #F1F5F9;"
-        "   color: #475569;"
-        "   border: 1px solid #CBD5E1;"
+        "   background-color: #F4F8FF;"
+        "   color: #2563EB;"
+        "   border: 1px solid #E2EAF4;"
         "   border-radius: 8px;"
         "   padding: 8px 12px;"
         "   font-weight: 700;"
         "   font-size: 12px;"
         "}"
-        "QPushButton:hover { background-color: #E2E8F0; color: #0F172A; }"
+        "QPushButton:hover { background-color: #EAF2FF; border-color: #CBD5E1; }"
     );
     connect(m_resetBtn, &QPushButton::clicked, this, &BrowseScreen::resetFilters);
 
@@ -197,7 +197,7 @@ void BrowseScreen::setupUI()
     loadingLayout->setSpacing(10);
 
     m_loadingLabel = new QLabel("⏳ Loading items from campus server...", m_loadingBox);
-    m_loadingLabel->setStyleSheet("font-size: 14px; font-weight: 700; color: #4F46E5;");
+    m_loadingLabel->setStyleSheet("font-size: 14px; font-weight: 700; color: #2563EB;");
     m_loadingLabel->setAlignment(Qt::AlignCenter);
 
     m_progressBar = new QProgressBar(m_loadingBox);
@@ -207,12 +207,12 @@ void BrowseScreen::setupUI()
     m_progressBar->setTextVisible(false);
     m_progressBar->setStyleSheet(
         "QProgressBar {"
-        "   background-color: #E2E8F0;"
+        "   background-color: #E2EAF4;"
         "   border-radius: 3px;"
         "   border: none;"
         "}"
         "QProgressBar::chunk {"
-        "   background-color: #4F46E5;"
+        "   background-color: #2563EB;"
         "   border-radius: 3px;"
         "}"
     );
@@ -297,15 +297,15 @@ void BrowseScreen::onFilterButtonClicked(const QString &filter)
 
     QString defaultStyle =
         "QPushButton {"
-        "   background-color: #F1F5F9;"
-        "   color: #475569;"
-        "   font-weight: 700;"
+        "   background-color: #F4F8FF;"
+        "   color: #172B4D;"
+        "   font-weight: 600;"
         "   padding: 8px 14px;"
         "   border-radius: 8px;"
-        "   border: 1px solid #E2E8F0;"
+        "   border: 1px solid #E2EAF4;"
         "   font-size: 12px;"
         "}"
-        "QPushButton:hover { background-color: #E2E8F0; }";
+        "QPushButton:hover { background-color: #EAF2FF; color: #2563EB; }";
 
     m_allBtn->setStyleSheet(defaultStyle);
     m_lostBtn->setStyleSheet(defaultStyle);
@@ -314,7 +314,7 @@ void BrowseScreen::onFilterButtonClicked(const QString &filter)
     if (filter == "all") {
         m_allBtn->setStyleSheet(
             "QPushButton {"
-            "   background-color: #4F46E5;"
+            "   background-color: #2563EB;"
             "   color: #FFFFFF;"
             "   font-weight: 700;"
             "   padding: 8px 14px;"
@@ -326,7 +326,7 @@ void BrowseScreen::onFilterButtonClicked(const QString &filter)
     } else if (filter == "lost") {
         m_lostBtn->setStyleSheet(
             "QPushButton {"
-            "   background-color: #DC2626;"
+            "   background-color: #EF4444;"
             "   color: #FFFFFF;"
             "   font-weight: 700;"
             "   padding: 8px 14px;"
@@ -338,7 +338,7 @@ void BrowseScreen::onFilterButtonClicked(const QString &filter)
     } else if (filter == "found") {
         m_foundBtn->setStyleSheet(
             "QPushButton {"
-            "   background-color: #059669;"
+            "   background-color: #16A66A;"
             "   color: #FFFFFF;"
             "   font-weight: 700;"
             "   padding: 8px 14px;"

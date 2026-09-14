@@ -1,6 +1,7 @@
 #include "AdminScreen.h"
 #include "AdminClaimReviewDialog.h"
 #include "../auth/AuthManager.h"
+#include "../components/Theme.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -78,10 +79,10 @@ void AdminScreen::setupUI()
     titleLayout->setSpacing(2);
 
     QLabel *pageTitle = new QLabel("🛡️ Master Campus Administration & Claims Console", this);
-    pageTitle->setStyleSheet("font-size: 24px; font-weight: 800; color: #0F172A; background: transparent;");
+    pageTitle->setStyleSheet("font-size: 24px; font-weight: 700; color: " + Theme::Text::Primary + "; background: transparent;");
 
     QLabel *pageSub = new QLabel("Restricted administrative console for campus property verification, claims approval, and master inventory audit.", this);
-    pageSub->setStyleSheet("font-size: 13px; color: #64748B; background: transparent;");
+    pageSub->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + "; background: transparent;");
 
     titleLayout->addWidget(pageTitle);
     titleLayout->addWidget(pageSub);
@@ -92,15 +93,15 @@ void AdminScreen::setupUI()
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     m_refreshBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4F46E5;"
+        "   background-color: " + Theme::Primary::Main + ";"
         "   color: white;"
-        "   font-weight: 700;"
+        "   font-weight: 600;"
         "   font-size: 13px;"
         "   padding: 10px 18px;"
-        "   border-radius: 8px;"
+        "   border-radius: 10px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4338CA; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
     );
     connect(m_refreshBtn, &QPushButton::clicked, this, &AdminScreen::refreshData);
     headerRow->addWidget(m_refreshBtn);
@@ -112,8 +113,8 @@ void AdminScreen::setupUI()
     m_forbiddenBox->setStyleSheet(
         "QFrame {"
         "   background-color: #FFFFFF;"
-        "   border: 1px solid #E2E8F0;"
-        "   border-radius: 16px;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 18px;"
         "   padding: 48px 32px;"
         "}"
     );
@@ -126,7 +127,7 @@ void AdminScreen::setupUI()
     shieldIcon->setAlignment(Qt::AlignCenter);
 
     QLabel *forbidTitle = new QLabel("Restricted Administrator Access", m_forbiddenBox);
-    forbidTitle->setStyleSheet("font-size: 20px; font-weight: 800; color: #0F172A; background: transparent;");
+    forbidTitle->setStyleSheet("font-size: 20px; font-weight: 700; color: " + Theme::Text::Primary + "; background: transparent;");
     forbidTitle->setAlignment(Qt::AlignCenter);
 
     QLabel *forbidMsg = new QLabel(
@@ -134,22 +135,22 @@ void AdminScreen::setupUI()
         "Please log in with a verified staff or administrator university account.",
         m_forbiddenBox
     );
-    forbidMsg->setStyleSheet("font-size: 14px; color: #64748B; background: transparent; line-height: 140%;");
+    forbidMsg->setStyleSheet("font-size: 14px; color: " + Theme::Text::Secondary + "; background: transparent; line-height: 140%;");
     forbidMsg->setAlignment(Qt::AlignCenter);
 
     QPushButton *toLoginBtn = new QPushButton("Authenticate as Administrator", m_forbiddenBox);
     toLoginBtn->setCursor(Qt::PointingHandCursor);
     toLoginBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4F46E5;"
+        "   background-color: " + Theme::Primary::Main + ";"
         "   color: white;"
-        "   font-weight: 700;"
+        "   font-weight: 600;"
         "   font-size: 14px;"
         "   padding: 12px 24px;"
-        "   border-radius: 8px;"
+        "   border-radius: 10px;"
         "   border: none;"
         "}"
-        "QPushButton:hover { background-color: #4338CA; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
     );
     connect(toLoginBtn, &QPushButton::clicked, this, [this]() {
         emit navigateTo(4); // Login screen index
@@ -175,7 +176,7 @@ void AdminScreen::setupUI()
     loadLayout->setSpacing(8);
 
     QLabel *loadLabel = new QLabel("⏳ Querying admin console data from backend server...", m_loadingBox);
-    loadLabel->setStyleSheet("font-size: 13px; font-weight: 600; color: #4F46E5;");
+    loadLabel->setStyleSheet("font-size: 13px; font-weight: 600; color: " + Theme::Primary::Main + ";");
     loadLabel->setAlignment(Qt::AlignCenter);
 
     m_progressBar = new QProgressBar(m_loadingBox);
@@ -183,8 +184,8 @@ void AdminScreen::setupUI()
     m_progressBar->setFixedHeight(4);
     m_progressBar->setTextVisible(false);
     m_progressBar->setStyleSheet(
-        "QProgressBar { background-color: #E2E8F0; border-radius: 2px; border: none; }"
-        "QProgressBar::chunk { background-color: #4F46E5; border-radius: 2px; }"
+        "QProgressBar { background-color: " + Theme::Background::Page + "; border-radius: 2px; border: none; }"
+        "QProgressBar::chunk { background-color: " + Theme::Primary::Main + "; border-radius: 2px; }"
     );
 
     loadLayout->addWidget(loadLabel);
@@ -198,24 +199,24 @@ void AdminScreen::setupUI()
         "QWidget {"
         "   background-color: #FEF2F2;"
         "   border: 1px solid #FECDD3;"
-        "   border-radius: 8px;"
+        "   border-radius: 10px;"
         "   padding: 14px;"
         "}"
     );
     QHBoxLayout *errorLayout = new QHBoxLayout(m_errorBox);
     m_errorLabel = new QLabel(m_errorBox);
-    m_errorLabel->setStyleSheet("color: #DC2626; font-size: 13px; font-weight: 600; background: transparent;");
+    m_errorLabel->setStyleSheet("color: " + Theme::Status::Error + "; font-size: 13px; font-weight: 600; background: transparent;");
 
     m_retryBtn = new QPushButton("Retry Request", m_errorBox);
     m_retryBtn->setCursor(Qt::PointingHandCursor);
     m_retryBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #DC2626;"
+        "   background-color: " + Theme::Status::Error + ";"
         "   color: white;"
         "   font-weight: 600;"
         "   font-size: 12px;"
         "   padding: 6px 14px;"
-        "   border-radius: 6px;"
+        "   border-radius: 8px;"
         "   border: none;"
         "}"
         "QPushButton:hover { background-color: #B91C1C; }"
@@ -236,22 +237,26 @@ void AdminScreen::setupUI()
         "   background: transparent;"
         "}"
         "QTabBar::tab {"
-        "   background: #F1F5F9;"
-        "   color: #475569;"
+        "   background: #FFFFFF;"
+        "   color: " + Theme::Text::Secondary + ";"
         "   font-size: 13px;"
-        "   font-weight: 700;"
-        "   padding: 10px 24px;"
-        "   border-top-left-radius: 8px;"
-        "   border-top-right-radius: 8px;"
+        "   font-weight: 600;"
+        "   padding: 11px 24px;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-bottom: none;"
+        "   border-top-left-radius: 10px;"
+        "   border-top-right-radius: 10px;"
         "   margin-right: 4px;"
         "}"
         "QTabBar::tab:selected {"
         "   background: #FFFFFF;"
-        "   color: #2563EB;"
-        "   border-top: 3px solid #2563EB;"
+        "   color: " + Theme::Primary::Main + ";"
+        "   border-top: 3px solid " + Theme::Primary::Main + ";"
+        "   font-weight: 700;"
         "}"
         "QTabBar::tab:hover:!selected {"
-        "   background: #E2E8F0;"
+        "   background: " + Theme::Primary::Subtle + ";"
+        "   color: " + Theme::Primary::Main + ";"
         "}"
     );
 
@@ -281,8 +286,8 @@ void AdminScreen::setupUI()
     QFrame *claimsCard = new QFrame(claimsTab);
     claimsCard->setStyleSheet(
         "QFrame {"
-        "   background-color: rgba(255, 255, 255, 0.95);"
-        "   border: 1px solid #E2E8F0;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
         "   border-radius: 16px;"
         "   padding: 18px;"
         "}"
@@ -317,7 +322,7 @@ void AdminScreen::setupUI()
     cFilterRow->addStretch();
 
     m_claimsCountLabel = new QLabel("0 claims", claimsCard);
-    m_claimsCountLabel->setStyleSheet("font-size: 12px; color: #64748B; font-weight: 600;");
+    m_claimsCountLabel->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + "; font-weight: 600;");
     cFilterRow->addWidget(m_claimsCountLabel);
 
     m_claimsSearchEdit = new QLineEdit(claimsCard);
@@ -325,14 +330,14 @@ void AdminScreen::setupUI()
     m_claimsSearchEdit->setFixedWidth(260);
     m_claimsSearchEdit->setStyleSheet(
         "QLineEdit {"
-        "   background-color: #F8FAFC;"
-        "   border: 1px solid #CBD5E1;"
-        "   border-radius: 8px;"
-        "   padding: 7px 12px;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
+        "   padding: 8px 12px;"
         "   font-size: 12px;"
-        "   color: #0F172A;"
+        "   color: " + Theme::Text::Primary + ";"
         "}"
-        "QLineEdit:focus { border: 1.5px solid #2563EB; background-color: #FFFFFF; }"
+        "QLineEdit:focus { border: 2px solid " + Theme::Primary::Main + "; background-color: #FFFFFF; }"
     );
     connect(m_claimsSearchEdit, &QLineEdit::textChanged, this, &AdminScreen::applyClaimsFilter);
     cFilterRow->addWidget(m_claimsSearchEdit);
@@ -370,29 +375,30 @@ void AdminScreen::setupUI()
     m_claimsTable->setStyleSheet(
         "QTableWidget {"
         "   background-color: #FFFFFF;"
-        "   alternate-background-color: #F8FAFC;"
-        "   border: 1px solid #E2E8F0;"
-        "   border-radius: 8px;"
+        "   alternate-background-color: #FAFCFE;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
         "   font-size: 13px;"
         "   gridline-color: #F1F5F9;"
         "}"
         "QHeaderView::section {"
-        "   background-color: #F1F5F9;"
-        "   color: #475569;"
+        "   background-color: #F8FAFC;"
+        "   color: " + Theme::Text::Secondary + ";"
         "   font-weight: 700;"
         "   border: none;"
-        "   border-bottom: 2px solid #E2E8F0;"
+        "   border-bottom: 2px solid " + Theme::Border::Default + ";"
         "   padding: 10px 8px;"
         "   font-size: 11px;"
         "   text-transform: uppercase;"
+        "   letter-spacing: 0.5px;"
         "}"
         "QTableWidget::item {"
         "   padding: 8px 6px;"
-        "   color: #1E293B;"
+        "   color: " + Theme::Text::Primary + ";"
         "}"
         "QTableWidget::item:selected {"
-        "   background-color: #EFF6FF;"
-        "   color: #2563EB;"
+        "   background-color: " + Theme::Primary::Subtle + ";"
+        "   color: " + Theme::Primary::Main + ";"
         "}"
     );
 
@@ -426,8 +432,8 @@ void AdminScreen::setupUI()
     QFrame *tableCard = new QFrame(inventoryTab);
     tableCard->setStyleSheet(
         "QFrame {"
-        "   background-color: rgba(255, 255, 255, 0.95);"
-        "   border: 1px solid #E2E8F0;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
         "   border-radius: 16px;"
         "   padding: 20px;"
         "}"
@@ -437,24 +443,24 @@ void AdminScreen::setupUI()
 
     QHBoxLayout *tableHeaderRow = new QHBoxLayout();
     QLabel *tableTitle = new QLabel("Master Item Registry (Live Database)", tableCard);
-    tableTitle->setStyleSheet("font-size: 16px; font-weight: 800; color: #0F172A;");
+    tableTitle->setStyleSheet("font-size: 16px; font-weight: 700; color: " + Theme::Text::Primary + ";");
 
     m_recordCountLabel = new QLabel("0 records", tableCard);
-    m_recordCountLabel->setStyleSheet("font-size: 13px; color: #64748B;");
+    m_recordCountLabel->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + ";");
 
     m_searchEdit = new QLineEdit(tableCard);
     m_searchEdit->setPlaceholderText("🔍 Filter by ID, title, type, location, user...");
     m_searchEdit->setFixedWidth(280);
     m_searchEdit->setStyleSheet(
         "QLineEdit {"
-        "   background-color: #F8FAFC;"
-        "   border: 1px solid #CBD5E1;"
-        "   border-radius: 8px;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
         "   padding: 8px 12px;"
         "   font-size: 12px;"
-        "   color: #0F172A;"
+        "   color: " + Theme::Text::Primary + ";"
         "}"
-        "QLineEdit:focus { border: 1.5px solid #4F46E5; background-color: #FFFFFF; }"
+        "QLineEdit:focus { border: 2px solid " + Theme::Primary::Main + "; background-color: #FFFFFF; }"
     );
     connect(m_searchEdit, &QLineEdit::textChanged, this, &AdminScreen::applyTableFilter);
 
@@ -497,29 +503,30 @@ void AdminScreen::setupUI()
     m_table->setStyleSheet(
         "QTableWidget {"
         "   background-color: #FFFFFF;"
-        "   alternate-background-color: #F8FAFC;"
-        "   border: 1px solid #E2E8F0;"
-        "   border-radius: 8px;"
+        "   alternate-background-color: #FAFCFE;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
         "   font-size: 13px;"
         "   gridline-color: #F1F5F9;"
         "}"
         "QHeaderView::section {"
-        "   background-color: #F1F5F9;"
-        "   color: #475569;"
+        "   background-color: #F8FAFC;"
+        "   color: " + Theme::Text::Secondary + ";"
         "   font-weight: 700;"
         "   border: none;"
-        "   border-bottom: 2px solid #E2E8F0;"
+        "   border-bottom: 2px solid " + Theme::Border::Default + ";"
         "   padding: 10px 8px;"
         "   font-size: 11px;"
         "   text-transform: uppercase;"
+        "   letter-spacing: 0.5px;"
         "}"
         "QTableWidget::item {"
         "   padding: 8px 6px;"
-        "   color: #1E293B;"
+        "   color: " + Theme::Text::Primary + ";"
         "}"
         "QTableWidget::item:selected {"
-        "   background-color: #EEF2FF;"
-        "   color: #4F46E5;"
+        "   background-color: " + Theme::Primary::Subtle + ";"
+        "   color: " + Theme::Primary::Main + ";"
         "}"
     );
 
@@ -613,17 +620,17 @@ void AdminScreen::onClaimFilterBtnClicked(const QString& filter)
         if (active) {
             btn->setStyleSheet(
                 "QPushButton {"
-                "   background-color: #2563EB; color: white; border: none;"
-                "   border-radius: 16px; font-size: 12px; font-weight: 700; padding: 6px 14px;"
+                "   background-color: " + Theme::Primary::Main + "; color: white; border: none;"
+                "   border-radius: 16px; font-size: 12px; font-weight: 600; padding: 6px 14px;"
                 "}"
             );
         } else {
             btn->setStyleSheet(
                 "QPushButton {"
-                "   background-color: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;"
-                "   border-radius: 16px; font-size: 12px; font-weight: 600; padding: 6px 14px;"
+                "   background-color: #FFFFFF; color: " + Theme::Text::Secondary + "; border: 1px solid " + Theme::Border::Default + ";"
+                "   border-radius: 16px; font-size: 12px; font-weight: 500; padding: 6px 14px;"
                 "}"
-                "QPushButton:hover { background-color: #E2E8F0; }"
+                "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; color: " + Theme::Primary::Main + "; border-color: " + Theme::Primary::Border + "; }"
             );
         }
     };
@@ -718,13 +725,13 @@ void AdminScreen::populateClaimsTable(const QVector<Claim> &claims)
             "   background-color: %1;"
             "   color: white;"
             "   font-size: 11px;"
-            "   font-weight: bold;"
-            "   padding: 5px 12px;"
-            "   border-radius: 6px;"
+            "   font-weight: 600;"
+            "   padding: 6px 14px;"
+            "   border-radius: 8px;"
             "   border: none;"
             "}"
             "QPushButton:hover { background-color: %2; }"
-        ).arg(c.isPending() ? "#2563EB" : "#475569", c.isPending() ? "#1D4ED8" : "#334155"));
+        ).arg(c.isPending() ? Theme::Primary::Main : "#64748B", c.isPending() ? Theme::Primary::Dark : "#475569"));
 
         connect(reviewBtn, &QPushButton::clicked, this, [this, c]() {
             AdminClaimReviewDialog dlg(c, m_apiClient, this);

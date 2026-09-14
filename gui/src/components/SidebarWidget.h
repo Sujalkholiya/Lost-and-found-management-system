@@ -20,6 +20,9 @@ signals:
     void logoutRequested();
     void profileClicked();
 
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
 private:
     void setupUI();
     QPushButton* createNavButton(const QString &text, const QString &iconText, int screenIndex);

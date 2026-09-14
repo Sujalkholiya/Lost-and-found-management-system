@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include "../network/ImageLoader.h"
 #include "../auth/AuthManager.h"
+#include "../components/Theme.h"
 
 ClaimFormDialog::ClaimFormDialog(const Item& item, ApiClient* apiClient, QWidget* parent)
     : QDialog(parent),
@@ -38,14 +39,14 @@ void ClaimFormDialog::setupUi()
 
     // Header Title
     QLabel* titleLabel = new QLabel("📋 Item Ownership Verification", this);
-    titleLabel->setStyleSheet("font-size: 20px; font-weight: 800; color: #0F172A;");
+    titleLabel->setStyleSheet("font-size: 20px; font-weight: 700; color: " + Theme::Text::Primary + ";");
     layout->addWidget(titleLabel);
 
     QLabel* subtitleLabel = new QLabel(
         "To protect campus property and prevent unauthorized claims, please provide specific verification answers that only the genuine owner would know.",
         this
     );
-    subtitleLabel->setStyleSheet("font-size: 13px; color: #64748B; line-height: 140%;");
+    subtitleLabel->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + "; line-height: 140%;");
     subtitleLabel->setWordWrap(true);
     layout->addWidget(subtitleLabel);
 
@@ -54,9 +55,9 @@ void ClaimFormDialog::setupUi()
     itemCard->setStyleSheet(
         "QFrame {"
         "   background-color: #F8FAFC;"
-        "   border: 1px solid #E2E8F0;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
         "   border-radius: 12px;"
-        "   padding: 12px;"
+        "   padding: 14px;"
         "}"
     );
     QHBoxLayout* itemCardLayout = new QHBoxLayout(itemCard);
@@ -65,7 +66,7 @@ void ClaimFormDialog::setupUi()
     if (m_item.hasImage()) {
         QLabel* imgLabel = new QLabel(itemCard);
         imgLabel->setFixedSize(72, 72);
-        imgLabel->setStyleSheet("background-color: #E2E8F0; border-radius: 8px; border: 1px solid #CBD5E1;");
+        imgLabel->setStyleSheet("background-color: #FFFFFF; border-radius: 8px; border: 1px solid " + Theme::Border::Default + ";");
         imgLabel->setAlignment(Qt::AlignCenter);
         ImageLoader::instance().loadIntoLabel(m_item.imageUrl(), imgLabel, QSize(72, 72));
         itemCardLayout->addWidget(imgLabel);
@@ -75,15 +76,15 @@ void ClaimFormDialog::setupUi()
     itemInfoLayout->setSpacing(4);
 
     QLabel* itemTitle = new QLabel(m_item.title, itemCard);
-    itemTitle->setStyleSheet("font-size: 15px; font-weight: bold; color: #0F172A;");
+    itemTitle->setStyleSheet("font-size: 15px; font-weight: 700; color: " + Theme::Text::Primary + ";");
     itemInfoLayout->addWidget(itemTitle);
 
     QLabel* itemMeta = new QLabel(QString("📍 %1  •  Found Item #%2").arg(m_item.location).arg(m_item.id), itemCard);
-    itemMeta->setStyleSheet("font-size: 12px; color: #64748B;");
+    itemMeta->setStyleSheet("font-size: 12px; color: " + Theme::Text::Secondary + ";");
     itemInfoLayout->addWidget(itemMeta);
 
     QLabel* itemBadge = new QLabel("Verification Review by Campus Admin Required", itemCard);
-    itemBadge->setStyleSheet("font-size: 11px; font-weight: 600; color: #0284C7;");
+    itemBadge->setStyleSheet("font-size: 11px; font-weight: 600; color: " + Theme::Primary::Main + ";");
     itemInfoLayout->addWidget(itemBadge);
 
     itemCardLayout->addLayout(itemInfoLayout, 1);
@@ -92,21 +93,21 @@ void ClaimFormDialog::setupUi()
     // Form inputs helper lambda
     auto createFieldLabel = [this](const QString& text, bool required = true) {
         QLabel* label = new QLabel(required ? QString("%1 <font color='#EF4444'>*</font>").arg(text) : text, this);
-        label->setStyleSheet("font-size: 13px; font-weight: 700; color: #1E293B; margin-top: 4px;");
+        label->setStyleSheet("font-size: 12px; font-weight: 700; color: " + Theme::Text::Primary + "; margin-top: 4px;");
         return label;
     };
 
     const QString inputStyle =
         "QLineEdit, QTextEdit {"
-        "   background-color: #F8FAFC;"
-        "   border: 1px solid #CBD5E1;"
-        "   border-radius: 8px;"
-        "   padding: 10px 12px;"
+        "   background-color: #FFFFFF;"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
+        "   padding: 10px 14px;"
         "   font-size: 13px;"
-        "   color: #0F172A;"
+        "   color: " + Theme::Text::Primary + ";"
         "}"
         "QLineEdit:focus, QTextEdit:focus {"
-        "   border: 1.5px solid #2563EB;"
+        "   border: 2px solid " + Theme::Primary::Main + ";"
         "   background-color: #FFFFFF;"
         "}";
 
@@ -148,7 +149,7 @@ void ClaimFormDialog::setupUi()
     m_affirmationCheckbox->setStyleSheet(
         "QCheckBox {"
         "   font-size: 12px;"
-        "   color: #334155;"
+        "   color: " + Theme::Text::Secondary + ";"
         "   spacing: 8px;"
         "   margin-top: 8px;"
         "}"
@@ -159,15 +160,15 @@ void ClaimFormDialog::setupUi()
         "   border: 1px solid #94A3B8;"
         "}"
         "QCheckBox::indicator:checked {"
-        "   background-color: #2563EB;"
-        "   border-color: #2563EB;"
+        "   background-color: " + Theme::Primary::Main + ";"
+        "   border-color: " + Theme::Primary::Main + ";"
         "}"
     );
     layout->addWidget(m_affirmationCheckbox);
 
     // Error label
     m_errorLabel = new QLabel(this);
-    m_errorLabel->setStyleSheet("font-size: 12px; color: #DC2626; font-weight: 600; padding: 4px 0;");
+    m_errorLabel->setStyleSheet("font-size: 12px; color: " + Theme::Status::Error + "; font-weight: 600; padding: 4px 0;");
     m_errorLabel->setWordWrap(true);
     m_errorLabel->hide();
     layout->addWidget(m_errorLabel);
@@ -180,15 +181,15 @@ void ClaimFormDialog::setupUi()
     m_cancelBtn->setCursor(Qt::PointingHandCursor);
     m_cancelBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #F1F5F9;"
-        "   color: #475569;"
-        "   border: 1px solid #CBD5E1;"
-        "   border-radius: 8px;"
+        "   background-color: #FFFFFF;"
+        "   color: " + Theme::Text::Secondary + ";"
+        "   border: 1px solid " + Theme::Border::Default + ";"
+        "   border-radius: 10px;"
         "   font-size: 13px;"
         "   font-weight: 600;"
         "   padding: 10px 20px;"
         "}"
-        "QPushButton:hover { background-color: #E2E8F0; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; color: " + Theme::Primary::Main + "; border-color: " + Theme::Primary::Border + "; }"
     );
     connect(m_cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
     btnLayout->addWidget(m_cancelBtn);
@@ -197,16 +198,16 @@ void ClaimFormDialog::setupUi()
     m_submitBtn->setCursor(Qt::PointingHandCursor);
     m_submitBtn->setStyleSheet(
         "QPushButton {"
-        "   background-color: #2563EB;"
+        "   background-color: " + Theme::Primary::Main + ";"
         "   color: #FFFFFF;"
         "   border: none;"
-        "   border-radius: 8px;"
+        "   border-radius: 10px;"
         "   font-size: 13px;"
-        "   font-weight: 700;"
+        "   font-weight: 600;"
         "   padding: 10px 24px;"
         "}"
-        "QPushButton:hover { background-color: #1D4ED8; }"
-        "QPushButton:disabled { background-color: #94A3B8; color: #E2E8F0; }"
+        "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
+        "QPushButton:disabled { background-color: #93C5FD; color: #FFFFFF; }"
     );
     connect(m_submitBtn, &QPushButton::clicked, this, &ClaimFormDialog::onSubmitClicked);
     btnLayout->addWidget(m_submitBtn, 1);

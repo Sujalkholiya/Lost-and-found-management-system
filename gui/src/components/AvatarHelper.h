@@ -9,6 +9,8 @@
 #include <QColor>
 #include <algorithm>
 
+#include <QPainterPath>
+
 namespace AvatarHelper {
 
 inline QString getInitials(const QString &name)
@@ -44,6 +46,32 @@ inline QPixmap createInitialsAvatar(const QString &name, int size = 36, const QS
     painter.drawText(pixmap.rect(), Qt::AlignCenter, getInitials(name));
 
     return pixmap;
+}
+
+inline QPixmap createCircularAvatar(const QPixmap &src, int size = 36)
+{
+    if (src.isNull()) {
+        return QPixmap();
+    }
+
+    QPixmap result(size, size);
+    result.fill(Qt::transparent);
+
+    QPixmap scaled = src.scaled(size, size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+
+    QPainter painter(&result);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+    QPainterPath path;
+    path.addEllipse(0, 0, size, size);
+    painter.setClipPath(path);
+
+    int x = (size - scaled.width()) / 2;
+    int y = (size - scaled.height()) / 2;
+    painter.drawPixmap(x, y, scaled);
+
+    return result;
 }
 
 } // namespace AvatarHelper

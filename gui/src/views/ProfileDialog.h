@@ -20,13 +20,17 @@ signals:
 
 private slots:
     void onSaveClicked();
+    void onChangePhotoClicked();
+    void onRemovePhotoClicked();
 
 private:
     void setupUI();
-    void updateAvatar(const QString &name);
+    void refreshAvatar(const QString &name);
 
     ApiClient *m_apiClient;
     QLabel *m_avatarLabel;
+    QPushButton *m_changePhotoBtn;
+    QPushButton *m_removePhotoBtn;
     QLabel *m_roleBadge;
     QLabel *m_userIdLabel;
     QLineEdit *m_nameEdit;
