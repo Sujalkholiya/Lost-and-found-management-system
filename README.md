@@ -464,11 +464,9 @@ mingw32-make -C gui\build\Desktop_Qt_6_11_2_MinGW_64_bit_Debug -j4
 ### 3. Missing DLLs when starting the backend
 - Ensure your `PATH` contains the MinGW runtime folder containing `libsqlite3-0.dll`, `libgcc_s_seh-1.dll`, and `libstdc++-6.dll`.
 
-### 4. "You cannot claim an item you reported"
-- The system prevents reporting students from filing claims against their own listings. Use a separate student test account to verify claim submission.
+### 4. "You can claim an item you reported"
+- The system can help reporting students from filing claims against their own listings. but the handling of the object depends on the authority for security.
 
 ---
 
-## 📄 License
 
-This project is developed for educational and campus property recovery management purposes. All rights reserved.
