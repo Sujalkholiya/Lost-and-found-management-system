@@ -13,6 +13,9 @@
 #include "../models/User.h"
 #include "../models/Claim.h"
 
+// OOP - Abstraction:
+// Low-level network complexity (HTTP requests, Bearer auth headers, socket I/O, JSON parsing) is hidden.
+// A clean, high-level interface (registerUser, loginUser, getAllItems, getUserItems, etc.) is exposed to UI callers.
 class ApiClient : public QObject
 {
     Q_OBJECT

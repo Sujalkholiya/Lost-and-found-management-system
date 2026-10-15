@@ -6,6 +6,8 @@
 #include <QPushButton>
 #include "../models/Item.h"
 
+// OOP - Inheritance:
+// ItemCardWidget (derived class) inherits GUI framing, styling, geometry, and event handling from QFrame (base class).
 class ItemCardWidget : public QFrame {
     Q_OBJECT
 
@@ -18,6 +20,8 @@ signals:
     void deleteItemRequested(const Item& item);
 
 protected:
+    // OOP - Polymorphism (Runtime / Method Overriding):
+    // Overrides virtual event-handling methods from base QWidget/QFrame to define card-specific click behavior.
     void mousePressEvent(QMouseEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
 

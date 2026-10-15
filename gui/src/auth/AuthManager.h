@@ -5,6 +5,9 @@
 #include <QString>
 #include "../models/User.h"
 
+// OOP - Encapsulation:
+// Data (m_currentUser, m_token) and the methods operating on it are grouped inside this class,
+// with direct access restricted using the 'private' access specifier and controlled access provided via public methods.
 class AuthManager : public QObject
 {
     Q_OBJECT
@@ -37,6 +40,8 @@ signals:
     void userLoggedOut();
     void userProfileUpdated(const User &user);
 
+// OOP - Encapsulation (Data Hiding):
+// Sensitive session data and helper methods are hidden from external access.
 private:
     explicit AuthManager(QObject *parent = nullptr);
     ~AuthManager() override = default;

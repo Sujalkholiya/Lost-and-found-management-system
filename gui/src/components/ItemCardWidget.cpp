@@ -212,6 +212,8 @@ ItemCardWidget::ItemCardWidget(const Item &item, QWidget *parent)
     );
 }
 
+// OOP - Polymorphism (Dynamic Dispatch):
+// When a mouse event occurs, Qt dispatches through a base QWidget pointer and dynamically calls this overridden implementation at runtime.
 void ItemCardWidget::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
