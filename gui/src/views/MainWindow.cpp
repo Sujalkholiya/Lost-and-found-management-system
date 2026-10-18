@@ -215,6 +215,27 @@ void MainWindow::setupConnections()
     connect(m_dashboardScreen, &DashboardScreen::profileClicked, this, &MainWindow::onOpenProfileDialog);
 
     connect(m_adminScreen, &AdminScreen::showToast, this, &MainWindow::onShowToast);
+    connect(m_adminScreen, &AdminScreen::viewItemDetails, this, &MainWindow::onShowItemDetails);
+
+    // Sidebar admin tab direct navigation
+    connect(m_sidebarWidget, &SidebarWidget::navigateToAdminTab, this, [this](int tabIndex) {
+        onNavigate(6);
+        m_adminScreen->switchToTab(tabIndex);
+        m_sidebarWidget->setActiveAdminTab(tabIndex);
+    });
+    connect(m_adminScreen, &AdminScreen::tabChanged, this, [this](int tabIndex) {
+        m_sidebarWidget->setActiveAdminTab(tabIndex);
+    });
+
+    // Toast notification click: jumps to AdminScreen Claim Management (tab 0) with Pending filter
+    connect(m_toastWidget, &ToastWidget::toastClicked, this, [this]() {
+        if (m_authManager->isAdmin()) {
+            onNavigate(6);
+            m_adminScreen->switchToTab(0);
+            m_adminScreen->onClaimFilterBtnClicked("pending");
+            m_sidebarWidget->setActiveAdminTab(0);
+        }
+    });
 
     connect(m_myClaimsScreen, &MyClaimsScreen::navigateTo, this, &MainWindow::onNavigate);
     connect(m_myClaimsScreen, &MyClaimsScreen::showToast, this, &MainWindow::onShowToast);
@@ -237,6 +258,8 @@ void MainWindow::onNavigate(int screenIndex)
             m_navbarWidget->setActiveScreen(-1);
             return;
         }
+        m_adminScreen->switchToTab(0);
+        m_sidebarWidget->setActiveAdminTab(0);
     }
 
     // Permission guard for Dashboard Screen (Index 5)

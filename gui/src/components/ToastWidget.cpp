@@ -14,7 +14,7 @@ ToastWidget::ToastWidget(QWidget *parent)
     , m_posAnimOut(new QPropertyAnimation(this, "pos", this))
     , m_fadeAnimOut(new QPropertyAnimation(m_opacityEffect, "opacity", this))
 {
-    setAttribute(Qt::WA_TransparentForMouseEvents);
+    setCursor(Qt::PointingHandCursor);
     setGraphicsEffect(m_opacityEffect);
 
     QHBoxLayout *layout = new QHBoxLayout(this);
@@ -135,4 +135,11 @@ void ToastWidget::hideAnimated()
     m_posAnimOut->setEndValue(endPos);
 
     m_hideAnimGroup->start();
+}
+
+void ToastWidget::mousePressEvent(QMouseEvent *event)
+{
+    QWidget::mousePressEvent(event);
+    emit toastClicked();
+    hideAnimated();
 }

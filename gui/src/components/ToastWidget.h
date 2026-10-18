@@ -23,6 +23,12 @@ public:
     explicit ToastWidget(QWidget *parent = nullptr);
     void showToast(const QString &message, ToastType type = ToastType::Info, int durationMs = 3500);
 
+signals:
+    void toastClicked();
+
+protected:
+    void mousePressEvent(QMouseEvent *event) override;
+
 private slots:
     void hideAnimated();
 

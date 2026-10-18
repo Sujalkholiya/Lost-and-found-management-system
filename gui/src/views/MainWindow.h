@@ -57,5 +57,4 @@ private:
     AccessDeniedScreen *m_accessDeniedScreen;
     MyClaimsScreen *m_myClaimsScreen;
 };
-
 #endif // MAINWINDOW_H

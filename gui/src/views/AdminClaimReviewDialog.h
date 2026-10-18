@@ -17,6 +17,9 @@ public:
 
 signals:
     void claimUpdated();
+    void claimApproved(const QString& reference);
+    void claimRejected(const QString& reference);
+    void claimHandedOver(const QString& reference);
 
 private slots:
     void onApproveClicked();

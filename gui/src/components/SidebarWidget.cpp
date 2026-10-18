@@ -13,9 +13,15 @@
 SidebarWidget::SidebarWidget(QWidget *parent)
     : QWidget(parent)
     , m_layout(nullptr)
-    , m_adminBtn(nullptr)
+    , m_overviewBtn(nullptr)
+    , m_browseBtn(nullptr)
+    , m_reportBtn(nullptr)
     , m_dashboardBtn(nullptr)
     , m_claimsBtn(nullptr)
+    , m_adminBtn(nullptr)
+    , m_claimMgmtBtn(nullptr)
+    , m_itemInvBtn(nullptr)
+    , m_accountBtn(nullptr)
     , m_loginBtn(nullptr)
     , m_logoutBtn(nullptr)
     , m_profileCardBtn(nullptr)
@@ -86,26 +92,52 @@ void SidebarWidget::setupUI()
     m_layout->addWidget(navCategoryLabel);
 
     // Navigation Buttons
-    // Index 0: Home Overview
-    m_layout->addWidget(createNavButton("Home Overview", "🏠", 0));
-    // Index 1: Browse Items
-    m_layout->addWidget(createNavButton("Browse Items", "🔍", 1));
-    // Index 2: Report Item
-    m_layout->addWidget(createNavButton("Report Item", "➕", 2));
-    // Index 5: Dashboard
+    // Index 0: Overview
+    m_overviewBtn = createNavButton("Home Overview", "🏠", 0);
+    m_layout->addWidget(m_overviewBtn);
+
+    // Admin Navigation: Claim Management (Screen 6, Tab 0)
+    m_claimMgmtBtn = createNavButton("Claim Management", "🏷️", 6);
+    m_claimMgmtBtn->disconnect(); // override standard navigateTo
+    connect(m_claimMgmtBtn, &QPushButton::clicked, this, [this]() {
+        emit navigateToAdminTab(0);
+    });
+    m_claimMgmtBtn->setVisible(false);
+    m_layout->addWidget(m_claimMgmtBtn);
+
+    // Admin Navigation: Item Inventory (Screen 6, Tab 1)
+    m_itemInvBtn = createNavButton("Item Inventory", "📦", 6);
+    m_itemInvBtn->disconnect(); // override standard navigateTo
+    connect(m_itemInvBtn, &QPushButton::clicked, this, [this]() {
+        emit navigateToAdminTab(1);
+    });
+    m_itemInvBtn->setVisible(false);
+    m_layout->addWidget(m_itemInvBtn);
+
+    // Index 1: Browse Items (Student/Guest)
+    m_browseBtn = createNavButton("Browse Items", "🔍", 1);
+    m_layout->addWidget(m_browseBtn);
+
+    // Index 2: Report Item (Student/Guest)
+    m_reportBtn = createNavButton("Report Item", "➕", 2);
+    m_layout->addWidget(m_reportBtn);
+
+    // Index 5: My Dashboard (Student)
     m_dashboardBtn = createNavButton("My Dashboard", "📊", 5);
-    m_dashboardBtn->setVisible(false); // Shown when logged in
+    m_dashboardBtn->setVisible(false);
     m_layout->addWidget(m_dashboardBtn);
 
-    // Index 8: My Claims
+    // Index 8: My Claims (Student)
     m_claimsBtn = createNavButton("My Claims", "🎒", 8);
-    m_claimsBtn->setVisible(false); // Shown when logged in
+    m_claimsBtn->setVisible(false);
     m_layout->addWidget(m_claimsBtn);
 
-    // Index 6: Admin Panel
-    m_adminBtn = createNavButton("Admin Console", "🛡️", 6);
-    m_adminBtn->setVisible(false); // Shown only for admin role
-    m_layout->addWidget(m_adminBtn);
+    // Admin: Account button (Opens Profile Dialog)
+    m_accountBtn = createNavButton("Account", "👤", -1);
+    m_accountBtn->disconnect();
+    connect(m_accountBtn, &QPushButton::clicked, this, &SidebarWidget::profileClicked);
+    m_accountBtn->setVisible(false);
+    m_layout->addWidget(m_accountBtn);
 
     m_layout->addStretch();
 
@@ -260,8 +292,31 @@ void SidebarWidget::setActiveScreen(int index)
 {
     for (QPushButton *btn : m_navButtons) {
         if (!btn) continue;
-        bool match = (btn->property("screenIndex").toInt() == index);
-        btn->setProperty("active", match);
+        if (index == 6) {
+            bool isClaimBtn = (btn == m_claimMgmtBtn);
+            btn->setProperty("active", isClaimBtn);
+        } else {
+            bool match = (btn->property("screenIndex").toInt() == index && btn != m_claimMgmtBtn && btn != m_itemInvBtn);
+            btn->setProperty("active", match);
+        }
+        if (btn->style()) {
+            btn->style()->unpolish(btn);
+            btn->style()->polish(btn);
+        }
+    }
+}
+
+void SidebarWidget::setActiveAdminTab(int tabIndex)
+{
+    for (QPushButton *btn : m_navButtons) {
+        if (!btn) continue;
+        if (btn == m_claimMgmtBtn) {
+            btn->setProperty("active", tabIndex == 0);
+        } else if (btn == m_itemInvBtn) {
+            btn->setProperty("active", tabIndex == 1);
+        } else {
+            btn->setProperty("active", false);
+        }
         if (btn->style()) {
             btn->style()->unpolish(btn);
             btn->style()->polish(btn);
@@ -271,22 +326,61 @@ void SidebarWidget::setActiveScreen(int index)
 
 void SidebarWidget::updateAuthStatus(bool isLoggedIn, const QString &userName, const QString &userRole)
 {
+    bool isAdmin = isLoggedIn && (userRole.toLower() == "admin");
+
     if (isLoggedIn) {
-        QString displayName = userName.trimmed().isEmpty() ? "Student" : userName.trimmed();
+        QString displayName = userName.trimmed().isEmpty() ? "User" : userName.trimmed();
         if (m_userNameLabel) m_userNameLabel->setText(displayName);
         updateAvatar(displayName);
 
         if (m_userBadgeLabel) {
-            if (userRole.toLower() == "admin") {
+            if (isAdmin) {
                 m_userBadgeLabel->setText("👑 Administrator");
             } else {
                 m_userBadgeLabel->setText("🎓 Student Account");
             }
         }
         if (m_profileCardBtn) m_profileCardBtn->setVisible(true);
-        if (m_adminBtn) m_adminBtn->setVisible(userRole.toLower() == "admin");
-        if (m_dashboardBtn) m_dashboardBtn->setVisible(true);
-        if (m_claimsBtn) m_claimsBtn->setVisible(true);
+
+        if (isAdmin) {
+            // Admin simplified sidebar:
+            // - Overview
+            // - Claim Management
+            // - Item Inventory
+            // - Account
+            // - Log Out
+            if (m_overviewBtn) {
+                m_overviewBtn->setText("🏠   Overview");
+                m_overviewBtn->setVisible(true);
+            }
+            if (m_claimMgmtBtn) m_claimMgmtBtn->setVisible(true);
+            if (m_itemInvBtn) m_itemInvBtn->setVisible(true);
+            if (m_accountBtn) m_accountBtn->setVisible(true);
+
+            // Hide student-only navigation:
+            if (m_browseBtn) m_browseBtn->setVisible(false);
+            if (m_reportBtn) m_reportBtn->setVisible(false);
+            if (m_dashboardBtn) m_dashboardBtn->setVisible(false);
+            if (m_claimsBtn) m_claimsBtn->setVisible(false);
+            if (m_adminBtn) m_adminBtn->setVisible(false);
+        } else {
+            // Student navigation:
+            if (m_overviewBtn) {
+                m_overviewBtn->setText("🏠   Home Overview");
+                m_overviewBtn->setVisible(true);
+            }
+            if (m_browseBtn) m_browseBtn->setVisible(true);
+            if (m_reportBtn) m_reportBtn->setVisible(true);
+            if (m_dashboardBtn) m_dashboardBtn->setVisible(true);
+            if (m_claimsBtn) m_claimsBtn->setVisible(true);
+
+            // Hide admin-only navigation:
+            if (m_claimMgmtBtn) m_claimMgmtBtn->setVisible(false);
+            if (m_itemInvBtn) m_itemInvBtn->setVisible(false);
+            if (m_accountBtn) m_accountBtn->setVisible(false);
+            if (m_adminBtn) m_adminBtn->setVisible(false);
+        }
+
         if (m_loginBtn) m_loginBtn->setVisible(false);
         if (m_logoutBtn) m_logoutBtn->setVisible(true);
     } else {
@@ -294,9 +388,21 @@ void SidebarWidget::updateAuthStatus(bool isLoggedIn, const QString &userName, c
         if (m_userBadgeLabel) m_userBadgeLabel->setText("Not Signed In");
         updateAvatar("Guest");
         if (m_profileCardBtn) m_profileCardBtn->setVisible(false);
-        if (m_adminBtn) m_adminBtn->setVisible(false);
+
+        if (m_overviewBtn) {
+            m_overviewBtn->setText("🏠   Home Overview");
+            m_overviewBtn->setVisible(true);
+        }
+        if (m_browseBtn) m_browseBtn->setVisible(true);
+        if (m_reportBtn) m_reportBtn->setVisible(true);
+
         if (m_dashboardBtn) m_dashboardBtn->setVisible(false);
         if (m_claimsBtn) m_claimsBtn->setVisible(false);
+        if (m_claimMgmtBtn) m_claimMgmtBtn->setVisible(false);
+        if (m_itemInvBtn) m_itemInvBtn->setVisible(false);
+        if (m_accountBtn) m_accountBtn->setVisible(false);
+        if (m_adminBtn) m_adminBtn->setVisible(false);
+
         if (m_loginBtn) m_loginBtn->setVisible(true);
         if (m_logoutBtn) m_logoutBtn->setVisible(false);
     }

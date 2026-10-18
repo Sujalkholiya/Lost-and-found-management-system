@@ -8,11 +8,17 @@
 #include <QScrollArea>
 #include <QFrame>
 #include <QShowEvent>
+#include <QHideEvent>
+#include <QDialog>
+#include <QMessageBox>
+#include <QDebug>
 
 AdminScreen::AdminScreen(ApiClient *apiClient, QWidget *parent)
     : QWidget(parent)
     , m_apiClient(apiClient)
     , m_currentClaimsFilter("all")
+    , m_roleBadgeLabel(nullptr)
+    , m_pendingBadgeLabel(nullptr)
     , m_tabWidget(nullptr)
     , m_totalCard(nullptr)
     , m_lostCard(nullptr)
@@ -21,7 +27,7 @@ AdminScreen::AdminScreen(ApiClient *apiClient, QWidget *parent)
     , m_pendingClaimsCard(nullptr)
     , m_approvedClaimsCard(nullptr)
     , m_handedOverClaimsCard(nullptr)
-    , m_totalClaimsCard(nullptr)
+    , m_rejectedClaimsCard(nullptr)
     , m_searchEdit(nullptr)
     , m_claimsSearchEdit(nullptr)
     , m_refreshBtn(nullptr)
@@ -41,8 +47,15 @@ AdminScreen::AdminScreen(ApiClient *apiClient, QWidget *parent)
     , m_retryBtn(nullptr)
     , m_table(nullptr)
     , m_claimsTable(nullptr)
+    , m_pollTimer(nullptr)
+    , m_isFirstPoll(true)
+    , m_isPolling(false)
 {
     setupUI();
+
+    m_pollTimer = new QTimer(this);
+    m_pollTimer->setInterval(3000);
+    connect(m_pollTimer, &QTimer::timeout, this, &AdminScreen::pollPendingClaims);
 
     connect(&AuthManager::instance(), &AuthManager::authStateChanged, this, [this](bool loggedIn) {
         Q_UNUSED(loggedIn);
@@ -54,6 +67,30 @@ void AdminScreen::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     checkPermissions();
+    if (AuthManager::instance().isAdmin()) {
+        // Open Admin Console with Claim Management selected by default
+        if (m_tabWidget && m_tabWidget->currentIndex() != 0) {
+            m_tabWidget->setCurrentIndex(0);
+        }
+        if (m_pollTimer && !m_pollTimer->isActive()) {
+            m_pollTimer->start(3000);
+        }
+    }
+}
+
+void AdminScreen::hideEvent(QHideEvent *event)
+{
+    QWidget::hideEvent(event);
+    if (m_pollTimer && m_pollTimer->isActive()) {
+        m_pollTimer->stop();
+    }
+}
+
+void AdminScreen::switchToTab(int tabIndex)
+{
+    if (m_tabWidget && tabIndex >= 0 && tabIndex < m_tabWidget->count()) {
+        m_tabWidget->setCurrentIndex(tabIndex);
+    }
 }
 
 void AdminScreen::checkPermissions()
@@ -64,6 +101,15 @@ void AdminScreen::checkPermissions()
 
     if (isAdmin) {
         refreshData();
+        if (m_pollTimer && !m_pollTimer->isActive() && isVisible()) {
+            m_pollTimer->start(3000);
+        }
+    } else {
+        if (m_pollTimer && m_pollTimer->isActive()) {
+            m_pollTimer->stop();
+        }
+        m_isFirstPoll = true;
+        m_knownPendingClaimIds.clear();
     }
 }
 
@@ -76,20 +122,37 @@ void AdminScreen::setupUI()
     // Header & Top Row
     QHBoxLayout *headerRow = new QHBoxLayout();
     QVBoxLayout *titleLayout = new QVBoxLayout();
-    titleLayout->setSpacing(2);
+    titleLayout->setSpacing(4);
 
-    QLabel *pageTitle = new QLabel("🛡️ Master Campus Administration & Claims Console", this);
+    QHBoxLayout *titleBadgeRow = new QHBoxLayout();
+    titleBadgeRow->setSpacing(10);
+
+    QLabel *pageTitle = new QLabel("🛡️ Campus Administration Console", this);
     pageTitle->setStyleSheet("font-size: 24px; font-weight: 700; color: " + Theme::Text::Primary + "; background: transparent;");
+    titleBadgeRow->addWidget(pageTitle);
+
+    m_roleBadgeLabel = new QLabel("👑 Administrator", this);
+    m_roleBadgeLabel->setStyleSheet(
+        "background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid #FDE68A;"
+    );
+    titleBadgeRow->addWidget(m_roleBadgeLabel);
+
+    m_pendingBadgeLabel = new QLabel("🔔 0 Pending", this);
+    m_pendingBadgeLabel->setStyleSheet(
+        "background-color: #FEE2E2; color: #B91C1C; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid #FECDD3;"
+    );
+    titleBadgeRow->addWidget(m_pendingBadgeLabel);
+    titleBadgeRow->addStretch();
 
     QLabel *pageSub = new QLabel("Restricted administrative console for campus property verification, claims approval, and master inventory audit.", this);
     pageSub->setStyleSheet("font-size: 13px; color: " + Theme::Text::Secondary + "; background: transparent;");
 
-    titleLayout->addWidget(pageTitle);
+    titleLayout->addLayout(titleBadgeRow);
     titleLayout->addWidget(pageSub);
     headerRow->addLayout(titleLayout);
     headerRow->addStretch();
 
-    m_refreshBtn = new QPushButton("🔄 Refresh All", this);
+    m_refreshBtn = new QPushButton("🔄 Refresh Data", this);
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     m_refreshBtn->setStyleSheet(
         "QPushButton {"
@@ -118,6 +181,7 @@ void AdminScreen::setupUI()
         "   padding: 48px 32px;"
         "}"
     );
+
     QVBoxLayout *forbidLayout = new QVBoxLayout(m_forbiddenBox);
     forbidLayout->setAlignment(Qt::AlignCenter);
     forbidLayout->setSpacing(16);
@@ -259,27 +323,28 @@ void AdminScreen::setupUI()
         "   color: " + Theme::Primary::Main + ";"
         "}"
     );
+    connect(m_tabWidget, &QTabWidget::currentChanged, this, &AdminScreen::tabChanged);
 
     // ==========================================
-    // TAB 1: CLAIM REQUESTS & VERIFICATION
+    // TAB 0: CLAIM MANAGEMENT (Primary Admin Tab)
     // ==========================================
     QWidget *claimsTab = new QWidget();
     QVBoxLayout *claimsTabLayout = new QVBoxLayout(claimsTab);
     claimsTabLayout->setContentsMargins(0, 16, 0, 0);
     claimsTabLayout->setSpacing(16);
 
-    // Claims KPI Row
+    // 4 Claims KPI Cards: Pending Review, Approved / Ready for Pickup, Handed Over, Rejected
     QHBoxLayout *claimsStatsRow = new QHBoxLayout();
     claimsStatsRow->setSpacing(14);
     m_pendingClaimsCard = new StatCardWidget("Pending Review", "⏳", StatCardWidget::Amber, claimsTab);
-    m_approvedClaimsCard = new StatCardWidget("Ready for Pickup", "🎫", StatCardWidget::Emerald, claimsTab);
-    m_handedOverClaimsCard = new StatCardWidget("Handed Over (Completed)", "🤝", StatCardWidget::Indigo, claimsTab);
-    m_totalClaimsCard = new StatCardWidget("Total Claim Files", "📋", StatCardWidget::Indigo, claimsTab);
+    m_approvedClaimsCard = new StatCardWidget("Approved / Ready for Pickup", "🎫", StatCardWidget::Emerald, claimsTab);
+    m_handedOverClaimsCard = new StatCardWidget("Handed Over", "🤝", StatCardWidget::Indigo, claimsTab);
+    m_rejectedClaimsCard = new StatCardWidget("Rejected", "❌", StatCardWidget::Rose, claimsTab);
 
     claimsStatsRow->addWidget(m_pendingClaimsCard);
     claimsStatsRow->addWidget(m_approvedClaimsCard);
     claimsStatsRow->addWidget(m_handedOverClaimsCard);
-    claimsStatsRow->addWidget(m_totalClaimsCard);
+    claimsStatsRow->addWidget(m_rejectedClaimsCard);
     claimsTabLayout->addLayout(claimsStatsRow);
 
     // Claims Frame Card
@@ -295,7 +360,7 @@ void AdminScreen::setupUI()
     QVBoxLayout *claimsCardLayout = new QVBoxLayout(claimsCard);
     claimsCardLayout->setSpacing(12);
 
-    // Claims Filter & Search Bar
+    // Claims Filter Buttons & Search Bar
     QHBoxLayout *cFilterRow = new QHBoxLayout();
     cFilterRow->setSpacing(8);
 
@@ -309,10 +374,10 @@ void AdminScreen::setupUI()
     };
 
     m_cBtnAll = makeClaimFilterBtn("All", "all");
-    m_cBtnPending = makeClaimFilterBtn("Pending Review", "pending");
-    m_cBtnApproved = makeClaimFilterBtn("Ready for Pickup", "approved");
-    m_cBtnHandedOver = makeClaimFilterBtn("Handed Over", "handed_over");
-    m_cBtnRejected = makeClaimFilterBtn("Rejected", "rejected");
+    m_cBtnPending = makeClaimFilterBtn("⏳ Pending Review", "pending");
+    m_cBtnApproved = makeClaimFilterBtn("🎫 Ready for Pickup", "approved");
+    m_cBtnHandedOver = makeClaimFilterBtn("🤝 Handed Over", "handed_over");
+    m_cBtnRejected = makeClaimFilterBtn("❌ Rejected", "rejected");
 
     cFilterRow->addWidget(m_cBtnAll);
     cFilterRow->addWidget(m_cBtnPending);
@@ -326,8 +391,8 @@ void AdminScreen::setupUI()
     cFilterRow->addWidget(m_claimsCountLabel);
 
     m_claimsSearchEdit = new QLineEdit(claimsCard);
-    m_claimsSearchEdit->setPlaceholderText("🔍 Search ref, claimant, item, email...");
-    m_claimsSearchEdit->setFixedWidth(260);
+    m_claimsSearchEdit->setPlaceholderText("🔍 Search ref, claimant, item...");
+    m_claimsSearchEdit->setFixedWidth(240);
     m_claimsSearchEdit->setStyleSheet(
         "QLineEdit {"
         "   background-color: #FFFFFF;"
@@ -344,26 +409,33 @@ void AdminScreen::setupUI()
 
     claimsCardLayout->addLayout(cFilterRow);
 
-    // Claims Table Widget
+    // Claims Table Widget: 7 Columns
+    // Reference | Target Item | Claimant | Claim Date | Status | Pickup Station | Actions
     m_claimsTable = new QTableWidget(claimsCard);
     m_claimsTable->setColumnCount(7);
-    m_claimsTable->setHorizontalHeaderLabels({
-        "Reference",
-        "Target Item",
-        "Claimant",
-        "Claim Date",
-        "Status",
-        "Pickup Station",
-        "Actions"
-    });
+
+    QStringList headers;
+    headers << "Reference"
+            << "Target Item"
+            << "Claimant"
+            << "Claim Date"
+            << "Status"
+            << "Pickup Station"
+            << "Actions";
+    m_claimsTable->setHorizontalHeaderLabels(headers);
 
     m_claimsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     m_claimsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    m_claimsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Interactive);
+    m_claimsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     m_claimsTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     m_claimsTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     m_claimsTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
-    m_claimsTable->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
+    m_claimsTable->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Fixed);
+    m_claimsTable->setColumnWidth(6, 180);
+    m_claimsTable->horizontalHeader()->setStretchLastSection(false);
+    m_claimsTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+    m_claimsTable->verticalHeader()->setDefaultSectionSize(48);
 
     m_claimsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_claimsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -404,10 +476,10 @@ void AdminScreen::setupUI()
 
     claimsCardLayout->addWidget(m_claimsTable);
     claimsTabLayout->addWidget(claimsCard);
-    m_tabWidget->addTab(claimsTab, "🏷️ Claim Requests & Handover");
+    m_tabWidget->addTab(claimsTab, "🏷️ Claim Management");
 
     // ==========================================
-    // TAB 2: MASTER INVENTORY
+    // TAB 1: ITEM INVENTORY
     // ==========================================
     QWidget *inventoryTab = new QWidget();
     QVBoxLayout *invTabLayout = new QVBoxLayout(inventoryTab);
@@ -470,24 +542,25 @@ void AdminScreen::setupUI()
     tableHeaderRow->addWidget(m_searchEdit);
     cardLayout->addLayout(tableHeaderRow);
 
-    // Master Table Widget: 8 Columns
+    // Master Inventory Table: 8 Columns
+    // ID | Item | Type | Location | Status | Reported By | Date | Action
     m_table = new QTableWidget(tableCard);
     m_table->setColumnCount(8);
     m_table->setHorizontalHeaderLabels({
         "ID",
-        "Title",
-        "Description",
+        "Item",
         "Type",
         "Location",
         "Status",
-        "User ID",
-        "Created At"
+        "Reported By",
+        "Date",
+        "Action"
     });
 
     m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
-    m_table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
-    m_table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Interactive);
     m_table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     m_table->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
     m_table->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
@@ -539,7 +612,7 @@ void AdminScreen::setupUI()
 
     cardLayout->addWidget(m_table);
     invTabLayout->addWidget(tableCard);
-    m_tabWidget->addTab(inventoryTab, "📦 Master Inventory");
+    m_tabWidget->addTab(inventoryTab, "📦 Item Inventory");
 
     contentLayout->addWidget(m_tabWidget);
     rootLayout->addWidget(m_contentBox);
@@ -598,10 +671,21 @@ void AdminScreen::refreshClaims()
             m_claimStats = stats;
 
             // Update KPI cards
-            m_pendingClaimsCard->setValue(QString::number(stats.pending));
-            m_approvedClaimsCard->setValue(QString::number(stats.approved));
-            m_handedOverClaimsCard->setValue(QString::number(stats.handedOver));
-            m_totalClaimsCard->setValue(QString::number(stats.total));
+            if (m_pendingClaimsCard) m_pendingClaimsCard->setValue(QString::number(stats.pending));
+            if (m_approvedClaimsCard) m_approvedClaimsCard->setValue(QString::number(stats.approved));
+            if (m_handedOverClaimsCard) m_handedOverClaimsCard->setValue(QString::number(stats.handedOver));
+            if (m_rejectedClaimsCard) m_rejectedClaimsCard->setValue(QString::number(stats.rejected));
+
+            // Update Header Pending Badge
+            if (m_pendingBadgeLabel) {
+                if (stats.pending > 0) {
+                    m_pendingBadgeLabel->setText(QString("🔔 %1 Pending").arg(stats.pending));
+                    m_pendingBadgeLabel->setStyleSheet("background-color: #FEF3C7; color: #B45309; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid #FCD34D;");
+                } else {
+                    m_pendingBadgeLabel->setText("✅ 0 Pending");
+                    m_pendingBadgeLabel->setStyleSheet("background-color: #ECFDF5; color: #047857; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid #A7F3D0;");
+                }
+            }
 
             applyClaimsFilter();
         },
@@ -611,35 +695,150 @@ void AdminScreen::refreshClaims()
     );
 }
 
+void AdminScreen::pollPendingClaims()
+{
+    // 1. Return immediately if the user is not an administrator or if screen is not visible
+    if (!m_apiClient || !AuthManager::instance().isAdmin() || !isVisible()) {
+        return;
+    }
+
+    // 2. Prevent overlapping polling requests
+    if (m_isPolling) {
+        return;
+    }
+
+    m_isPolling = true;
+
+    // 3. Fetch current pending claims from existing endpoint GET /api/admin/claims?status=pending
+    m_apiClient->getAdminClaims(
+        "pending",
+        [this](const QVector<Claim> &claims, const ClaimStats &stats) {
+            // Always reset m_isPolling upon completion
+            m_isPolling = false;
+
+            // Extract each pending claim's unique ID
+            QSet<int> currentPendingIds;
+            for (const Claim &c : claims) {
+                currentPendingIds.insert(c.id);
+            }
+
+            // Update Header Pending Badge
+            if (m_pendingBadgeLabel) {
+                if (stats.pending > 0) {
+                    m_pendingBadgeLabel->setText(QString("🔔 %1 Pending").arg(stats.pending));
+                    m_pendingBadgeLabel->setStyleSheet("background-color: #FEF3C7; color: #B45309; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid #FCD34D;");
+                } else {
+                    m_pendingBadgeLabel->setText("✅ 0 Pending");
+                    m_pendingBadgeLabel->setStyleSheet("background-color: #ECFDF5; color: #047857; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid #A7F3D0;");
+                }
+            }
+
+            // 4. On the FIRST successful poll:
+            // Populate m_knownPendingClaimIds with existing pending claim IDs and suppress old alerts
+            if (m_isFirstPoll) {
+                m_knownPendingClaimIds = currentPendingIds;
+                m_isFirstPoll = false;
+
+                // Update KPI cards with initial pending claim statistics
+                if (m_pendingClaimsCard) m_pendingClaimsCard->setValue(QString::number(stats.pending));
+                if (m_approvedClaimsCard) m_approvedClaimsCard->setValue(QString::number(stats.approved));
+                if (m_handedOverClaimsCard) m_handedOverClaimsCard->setValue(QString::number(stats.handedOver));
+                if (m_rejectedClaimsCard) m_rejectedClaimsCard->setValue(QString::number(stats.rejected));
+                return;
+            }
+
+            // 5. On subsequent successful polls:
+            // Compare current pending claim IDs with m_knownPendingClaimIds to detect only new claims
+            bool hasNewClaims = false;
+            for (const Claim &c : claims) {
+                if (!m_knownPendingClaimIds.contains(c.id)) {
+                    hasNewClaims = true;
+
+                    QString claimant = !c.claimantName.trimmed().isEmpty()
+                                           ? c.claimantName.trimmed()
+                                           : QString("User #%1").arg(c.userId);
+                    QString item = !c.itemTitle.trimmed().isEmpty()
+                                       ? QString(" for \"%1\"").arg(c.itemTitle.trimmed())
+                                       : "";
+
+                    QString msg = QString("🔔 New claim request received from %1%2 (%3)")
+                                      .arg(claimant, item, c.claimReference);
+
+                    emit showToast(msg, ToastType::Info);
+                }
+            }
+
+            // 6. Maintain tracking set accuracy:
+            m_knownPendingClaimIds = currentPendingIds;
+
+            // 7. Refresh AdminScreen claim data/table if new claims were detected
+            if (hasNewClaims) {
+                refreshClaims();
+            } else {
+                // Keep KPI cards live
+                if (m_pendingClaimsCard) m_pendingClaimsCard->setValue(QString::number(stats.pending));
+                if (m_approvedClaimsCard) m_approvedClaimsCard->setValue(QString::number(stats.approved));
+                if (m_handedOverClaimsCard) m_handedOverClaimsCard->setValue(QString::number(stats.handedOver));
+                if (m_rejectedClaimsCard) m_rejectedClaimsCard->setValue(QString::number(stats.rejected));
+            }
+        },
+        [this](int statusCode, const QString &errorMessage) {
+            Q_UNUSED(statusCode);
+            Q_UNUSED(errorMessage);
+            // Always reset m_isPolling on failure as well
+            m_isPolling = false;
+        }
+    );
+}
+
 void AdminScreen::onClaimFilterBtnClicked(const QString& filter)
 {
     m_currentClaimsFilter = filter;
 
-    auto updateBtn = [](QPushButton* btn, bool active) {
+    auto updateBtn = [](QPushButton* btn, bool active, bool isPendingBtn = false) {
         if (!btn) return;
-        if (active) {
-            btn->setStyleSheet(
-                "QPushButton {"
-                "   background-color: " + Theme::Primary::Main + "; color: white; border: none;"
-                "   border-radius: 16px; font-size: 12px; font-weight: 600; padding: 6px 14px;"
-                "}"
-            );
+        if (isPendingBtn) {
+            if (active) {
+                btn->setStyleSheet(
+                    "QPushButton {"
+                    "   background-color: #D97706; color: white; border: none;"
+                    "   border-radius: 16px; font-size: 12px; font-weight: 700; padding: 6px 14px;"
+                    "}"
+                );
+            } else {
+                btn->setStyleSheet(
+                    "QPushButton {"
+                    "   background-color: #FFFBEB; color: #B45309; border: 1px solid #FCD34D;"
+                    "   border-radius: 16px; font-size: 12px; font-weight: 600; padding: 6px 14px;"
+                    "}"
+                    "QPushButton:hover { background-color: #FEF3C7; color: #92400E; border-color: #F59E0B; }"
+                );
+            }
         } else {
-            btn->setStyleSheet(
-                "QPushButton {"
-                "   background-color: #FFFFFF; color: " + Theme::Text::Secondary + "; border: 1px solid " + Theme::Border::Default + ";"
-                "   border-radius: 16px; font-size: 12px; font-weight: 500; padding: 6px 14px;"
-                "}"
-                "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; color: " + Theme::Primary::Main + "; border-color: " + Theme::Primary::Border + "; }"
-            );
+            if (active) {
+                btn->setStyleSheet(
+                    "QPushButton {"
+                    "   background-color: " + Theme::Primary::Main + "; color: white; border: none;"
+                    "   border-radius: 16px; font-size: 12px; font-weight: 600; padding: 6px 14px;"
+                    "}"
+                );
+            } else {
+                btn->setStyleSheet(
+                    "QPushButton {"
+                    "   background-color: #FFFFFF; color: " + Theme::Text::Secondary + "; border: 1px solid " + Theme::Border::Default + ";"
+                    "   border-radius: 16px; font-size: 12px; font-weight: 500; padding: 6px 14px;"
+                    "}"
+                    "QPushButton:hover { background-color: " + Theme::Primary::Subtle + "; color: " + Theme::Primary::Main + "; border-color: " + Theme::Primary::Border + "; }"
+                );
+            }
         }
     };
 
-    updateBtn(m_cBtnAll, filter == "all");
-    updateBtn(m_cBtnPending, filter == "pending");
-    updateBtn(m_cBtnApproved, filter == "approved");
-    updateBtn(m_cBtnHandedOver, filter == "handed_over");
-    updateBtn(m_cBtnRejected, filter == "rejected");
+    updateBtn(m_cBtnAll, filter == "all", false);
+    updateBtn(m_cBtnPending, filter == "pending", true);
+    updateBtn(m_cBtnApproved, filter == "approved", false);
+    updateBtn(m_cBtnHandedOver, filter == "handed_over", false);
+    updateBtn(m_cBtnRejected, filter == "rejected", false);
 
     applyClaimsFilter();
 }
@@ -674,7 +873,37 @@ void AdminScreen::populateClaimsTable(const QVector<Claim> &claims)
     if (!m_claimsTable) return;
 
     m_claimsTable->setRowCount(0);
+    m_claimsTable->clearSpans();
     m_claimsCountLabel->setText(QString("%1 claim%2").arg(claims.size()).arg(claims.size() == 1 ? "" : "s"));
+
+    // Empty state
+    if (claims.isEmpty()) {
+        m_claimsTable->setRowCount(1);
+        m_claimsTable->setSpan(0, 0, 1, 7);
+        QString emptyMsg;
+        if (m_currentClaimsFilter == "pending") {
+            emptyMsg = "🎉 No pending claims — All claim requests have been reviewed!";
+        } else if (m_currentClaimsFilter == "approved") {
+            emptyMsg = "📦 No items awaiting pickup.";
+        } else if (m_currentClaimsFilter == "handed_over") {
+            emptyMsg = "🤝 No claims have been handed over yet.";
+        } else if (m_currentClaimsFilter == "rejected") {
+            emptyMsg = "✅ No rejected claim requests.";
+        } else {
+            emptyMsg = "🔍 No claim requests match the current filter or search criteria.";
+        }
+        QTableWidgetItem *emptyItem = new QTableWidgetItem(emptyMsg);
+        emptyItem->setTextAlignment(Qt::AlignCenter);
+        emptyItem->setForeground(QBrush(QColor("#64748B")));
+        QFont font = emptyItem->font();
+        font.setPointSize(11);
+        font.setItalic(true);
+        emptyItem->setFont(font);
+        emptyItem->setFlags(Qt::NoItemFlags);
+        m_claimsTable->setItem(0, 0, emptyItem);
+        m_claimsTable->setRowHeight(0, 120);
+        return;
+    }
 
     for (int i = 0; i < claims.size(); ++i) {
         const Claim& c = claims[i];
@@ -683,18 +912,29 @@ void AdminScreen::populateClaimsTable(const QVector<Claim> &claims)
         // 0. Reference
         QTableWidgetItem *refItem = new QTableWidgetItem(c.claimReference);
         refItem->setFont(QFont("Monospace", 9, QFont::Bold));
+        refItem->setTextAlignment(Qt::AlignCenter);
         m_claimsTable->setItem(i, 0, refItem);
 
         // 1. Target Item
-        QString itemDesc = QString("#%1 %2 (%3)").arg(c.itemId).arg(c.itemTitle, c.itemLocation);
-        m_claimsTable->setItem(i, 1, new QTableWidgetItem(itemDesc));
+        QString itemDesc = c.itemTitle.isEmpty() ? QString("Item #%1").arg(c.itemId) : c.itemTitle;
+        if (!c.itemLocation.isEmpty()) {
+            itemDesc += QString(" (%1)").arg(c.itemLocation);
+        }
+        QTableWidgetItem *itemCell = new QTableWidgetItem(itemDesc);
+        itemCell->setToolTip(QString("Item #%1: %2").arg(c.itemId).arg(c.itemTitle));
+        m_claimsTable->setItem(i, 1, itemCell);
 
         // 2. Claimant
-        QString claimantStr = QString("%1 (%2)").arg(c.claimantName.isEmpty() ? QString("User #%1").arg(c.userId) : c.claimantName, c.claimantEmail);
+        QString claimantStr = c.claimantName.isEmpty() ? QString("User #%1").arg(c.userId) : c.claimantName;
+        if (!c.claimantEmail.isEmpty()) {
+            claimantStr += QString(" (%1)").arg(c.claimantEmail);
+        }
         m_claimsTable->setItem(i, 2, new QTableWidgetItem(claimantStr));
 
         // 3. Claim Date
-        m_claimsTable->setItem(i, 3, new QTableWidgetItem(c.createdAt));
+        QTableWidgetItem *dateItem = new QTableWidgetItem(c.createdAt);
+        dateItem->setTextAlignment(Qt::AlignCenter);
+        m_claimsTable->setItem(i, 3, dateItem);
 
         // 4. Status Badge Widget
         QWidget *badgeWidget = new QWidget();
@@ -709,39 +949,284 @@ void AdminScreen::populateClaimsTable(const QVector<Claim> &claims)
         badgeLayout->addWidget(statusLabel);
         m_claimsTable->setCellWidget(i, 4, badgeWidget);
 
-        // 5. Pickup Location
-        m_claimsTable->setItem(i, 5, new QTableWidgetItem(c.pickupLocation));
+        // 5. Pickup Station
+        QString pickupLoc = c.pickupLocation.isEmpty() ? "Admin Block - Room 102" : c.pickupLocation;
+        QTableWidgetItem *pickupItem = new QTableWidgetItem(pickupLoc);
+        pickupItem->setTextAlignment(Qt::AlignCenter);
+        m_claimsTable->setItem(i, 5, pickupItem);
 
-        // 6. Action Button Widget: Review Claim
+        // 6. Actions Column: Real QPushButton Controls
         QWidget *actionWidget = new QWidget();
+        actionWidget->setMinimumHeight(40);
         QHBoxLayout *actionLayout = new QHBoxLayout(actionWidget);
-        actionLayout->setContentsMargins(4, 4, 4, 4);
+        actionLayout->setContentsMargins(6, 4, 6, 4);
+        actionLayout->setSpacing(6);
         actionLayout->setAlignment(Qt::AlignCenter);
 
-        QPushButton *reviewBtn = new QPushButton(c.isPending() ? "⚡ Review & Verify" : "🔍 View Details", actionWidget);
-        reviewBtn->setCursor(Qt::PointingHandCursor);
-        reviewBtn->setStyleSheet(QString(
-            "QPushButton {"
-            "   background-color: %1;"
-            "   color: white;"
-            "   font-size: 11px;"
-            "   font-weight: 600;"
-            "   padding: 6px 14px;"
-            "   border-radius: 8px;"
-            "   border: none;"
-            "}"
-            "QPushButton:hover { background-color: %2; }"
-        ).arg(c.isPending() ? Theme::Primary::Main : "#64748B", c.isPending() ? Theme::Primary::Dark : "#475569"));
+        if (c.isPending()) {
+            QPushButton *reviewBtn = new QPushButton("Review", actionWidget);
+            reviewBtn->setMinimumSize(90, 32);
+            reviewBtn->setCursor(Qt::PointingHandCursor);
+            reviewBtn->setStyleSheet(
+                "QPushButton {"
+                "   background-color: " + Theme::Primary::Main + ";"
+                "   color: white;"
+                "   font-size: 12px;"
+                "   font-weight: 600;"
+                "   padding: 6px 16px;"
+                "   border-radius: 6px;"
+                "   border: none;"
+                "}"
+                "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
+            );
+            connect(reviewBtn, &QPushButton::clicked, this, [this, c]() {
+                qDebug() << "REVIEW CLICKED"
+                         << "Claim ID:" << c.id
+                         << "Claim Reference:" << c.claimReference;
 
-        connect(reviewBtn, &QPushButton::clicked, this, [this, c]() {
-            AdminClaimReviewDialog dlg(c, m_apiClient, this);
-            connect(&dlg, &AdminClaimReviewDialog::claimUpdated, this, &AdminScreen::refreshData);
-            dlg.exec();
-        });
+                AdminClaimReviewDialog *dlg = new AdminClaimReviewDialog(c, m_apiClient, this);
+                connect(dlg, &AdminClaimReviewDialog::claimApproved, this, [this](const QString& ref) {
+                    Q_UNUSED(ref);
+                    emit showToast("Claim approved successfully.", ToastType::Success);
+                    refreshClaims();
+                });
+                connect(dlg, &AdminClaimReviewDialog::claimRejected, this, [this](const QString& ref) {
+                    Q_UNUSED(ref);
+                    emit showToast("Claim rejected successfully.", ToastType::Success);
+                    refreshClaims();
+                });
+                connect(dlg, &AdminClaimReviewDialog::claimHandedOver, this, [this](const QString& ref) {
+                    Q_UNUSED(ref);
+                    emit showToast("Item handed over successfully.", ToastType::Success);
+                    refreshClaims();
+                });
+                connect(dlg, &AdminClaimReviewDialog::claimUpdated, this, &AdminScreen::refreshData);
+                dlg->setAttribute(Qt::WA_DeleteOnClose);
+                dlg->exec();
+            });
+            actionLayout->addWidget(reviewBtn);
+        } else if (c.isApproved()) {
+            QPushButton *handoverBtn = new QPushButton("Mark Handed Over", actionWidget);
+            handoverBtn->setMinimumSize(140, 32);
+            handoverBtn->setCursor(Qt::PointingHandCursor);
+            handoverBtn->setStyleSheet(
+                "QPushButton {"
+                "   background-color: #10B981;"
+                "   color: white;"
+                "   font-size: 12px;"
+                "   font-weight: 600;"
+                "   padding: 6px 14px;"
+                "   border-radius: 6px;"
+                "   border: none;"
+                "}"
+                "QPushButton:hover { background-color: #059669; }"
+            );
+            connect(handoverBtn, &QPushButton::clicked, this, [this, c]() {
+                qDebug() << "HANDOVER CLICKED"
+                         << "Claim ID:" << c.id
+                         << "Claim Reference:" << c.claimReference;
+                openHandoverDialog(c);
+            });
+            actionLayout->addWidget(handoverBtn);
+        } else if (c.isHandedOver()) {
+            QPushButton *doneBtn = new QPushButton("Completed", actionWidget);
+            doneBtn->setMinimumSize(90, 32);
+            doneBtn->setEnabled(false);
+            doneBtn->setStyleSheet(
+                "QPushButton {"
+                "   background-color: #F1F5F9;"
+                "   color: #94A3B8;"
+                "   font-size: 12px;"
+                "   font-weight: 600;"
+                "   padding: 6px 14px;"
+                "   border-radius: 6px;"
+                "   border: 1px solid #CBD5E1;"
+                "}"
+            );
+            actionLayout->addWidget(doneBtn);
+        } else { // Rejected
+            QPushButton *reasonBtn = new QPushButton("View Reason", actionWidget);
+            reasonBtn->setMinimumSize(100, 32);
+            reasonBtn->setCursor(Qt::PointingHandCursor);
+            reasonBtn->setStyleSheet(
+                "QPushButton {"
+                "   background-color: #64748B;"
+                "   color: white;"
+                "   font-size: 12px;"
+                "   font-weight: 600;"
+                "   padding: 6px 14px;"
+                "   border-radius: 6px;"
+                "   border: none;"
+                "}"
+                "QPushButton:hover { background-color: #475569; }"
+            );
+            connect(reasonBtn, &QPushButton::clicked, this, [this, c]() {
+                showRejectionReasonDialog(c);
+            });
+            actionLayout->addWidget(reasonBtn);
+        }
 
-        actionLayout->addWidget(reviewBtn);
+        m_claimsTable->setRowHeight(i, 48);
         m_claimsTable->setCellWidget(i, 6, actionWidget);
     }
+    m_claimsTable->setColumnWidth(6, 180);
+}
+
+void AdminScreen::openHandoverDialog(const Claim &claim)
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle("Confirm Handover");
+    dialog.setFixedWidth(440);
+    dialog.setStyleSheet("background-color: #FFFFFF; font-family: 'Segoe UI', sans-serif;");
+
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(16);
+
+    QLabel *titleLabel = new QLabel("Confirm Handover", &dialog);
+    titleLabel->setStyleSheet("font-size: 18px; font-weight: 700; color: " + Theme::Text::Primary + ";");
+    layout->addWidget(titleLabel);
+
+    QFrame *infoFrame = new QFrame(&dialog);
+    infoFrame->setStyleSheet("background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px;");
+    QVBoxLayout *infoLayout = new QVBoxLayout(infoFrame);
+    infoLayout->setSpacing(8);
+
+    auto addRow = [infoLayout](const QString &label, const QString &val) {
+        QHBoxLayout *row = new QHBoxLayout();
+        QLabel *lbl = new QLabel(label);
+        lbl->setStyleSheet("font-size: 13px; font-weight: 600; color: #64748B; width: 80px;");
+        QLabel *v = new QLabel(val);
+        v->setStyleSheet("font-size: 13px; font-weight: 700; color: #1E293B;");
+        v->setWordWrap(true);
+        row->addWidget(lbl);
+        row->addWidget(v, 1);
+        infoLayout->addLayout(row);
+    };
+
+    addRow("Item:", claim.itemTitle.isEmpty() ? QString("Item #%1").arg(claim.itemId) : claim.itemTitle);
+    addRow("Claimant:", claim.claimantName.isEmpty() ? QString("User #%1").arg(claim.userId) : claim.claimantName);
+    layout->addWidget(infoFrame);
+
+    QLabel *confirmMsg = new QLabel("Confirm that the item has physically been handed over to the claimant.", &dialog);
+    confirmMsg->setWordWrap(true);
+    confirmMsg->setStyleSheet("font-size: 13px; color: " + Theme::Text::Primary + "; line-height: 140%;");
+    layout->addWidget(confirmMsg);
+
+    QHBoxLayout *btnLayout = new QHBoxLayout();
+    btnLayout->setSpacing(12);
+
+    QPushButton *cancelBtn = new QPushButton("Cancel", &dialog);
+    cancelBtn->setCursor(Qt::PointingHandCursor);
+    cancelBtn->setStyleSheet(
+        "QPushButton { background-color: #F1F5F9; color: #475569; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 8px; border: none; }"
+        "QPushButton:hover { background-color: #E2E8F0; }"
+    );
+    connect(cancelBtn, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+    QPushButton *confirmBtn = new QPushButton("Confirm Handover", &dialog);
+    confirmBtn->setCursor(Qt::PointingHandCursor);
+    confirmBtn->setStyleSheet(
+        "QPushButton { background-color: #10B981; color: white; font-size: 13px; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: none; }"
+        "QPushButton:hover { background-color: #059669; }"
+    );
+    connect(confirmBtn, &QPushButton::clicked, [&]() {
+        confirmBtn->setEnabled(false);
+        confirmBtn->setText("Processing...");
+
+        qDebug() << "HANDOVER CLICKED"
+                 << "Claim ID:"
+                 << claim.id
+                 << "Claim Reference:"
+                 << claim.claimReference;
+
+        m_apiClient->handoverClaim(
+            claim.id,
+            [this, &dialog](const QJsonObject &json) {
+                Q_UNUSED(json);
+                dialog.accept();
+                emit showToast("Item handed over successfully.", ToastType::Success);
+                refreshClaims();
+                refreshData();
+            },
+            [this, confirmBtn, &dialog](int statusCode, const QString &errorMessage) {
+                Q_UNUSED(statusCode);
+                confirmBtn->setEnabled(true);
+                confirmBtn->setText("Confirm Handover");
+                QMessageBox::critical(&dialog, "Handover Failed", errorMessage.isEmpty() ? "Failed to record handover." : errorMessage);
+            }
+        );
+    });
+
+    btnLayout->addStretch();
+    btnLayout->addWidget(cancelBtn);
+    btnLayout->addWidget(confirmBtn);
+    layout->addLayout(btnLayout);
+
+    dialog.exec();
+}
+
+void AdminScreen::showRejectionReasonDialog(const Claim &claim)
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle("Claim Rejection Details");
+    dialog.setFixedWidth(440);
+    dialog.setStyleSheet("background-color: #FFFFFF;");
+
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(16);
+
+    QLabel *titleLabel = new QLabel("❌ Claim Rejection Details", &dialog);
+    titleLabel->setStyleSheet("font-size: 18px; font-weight: 700; color: " + Theme::Text::Primary + ";");
+    layout->addWidget(titleLabel);
+
+    QFrame *infoFrame = new QFrame(&dialog);
+    infoFrame->setStyleSheet("background-color: #FFF1F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 14px;");
+    QVBoxLayout *infoLayout = new QVBoxLayout(infoFrame);
+    infoLayout->setSpacing(8);
+
+    auto addRow = [infoLayout](const QString &label, const QString &val) {
+        QHBoxLayout *row = new QHBoxLayout();
+        QLabel *lbl = new QLabel(label);
+        lbl->setStyleSheet("font-size: 12px; font-weight: 600; color: #9F1239; width: 90px;");
+        QLabel *v = new QLabel(val);
+        v->setStyleSheet("font-size: 12px; font-weight: 700; color: #881337;");
+        v->setWordWrap(true);
+        row->addWidget(lbl);
+        row->addWidget(v, 1);
+        infoLayout->addLayout(row);
+    };
+
+    addRow("Claim Ref:", claim.claimReference);
+    addRow("Item:", claim.itemTitle.isEmpty() ? QString("Item #%1").arg(claim.itemId) : claim.itemTitle);
+    addRow("Claimant:", claim.claimantName.isEmpty() ? QString("User #%1").arg(claim.userId) : claim.claimantName);
+    addRow("Reviewed At:", claim.reviewedAt.isEmpty() ? "N/A" : claim.reviewedAt);
+
+    QString notes = claim.rejectionReason.trimmed().isEmpty() ? "No specific reason provided by reviewer." : claim.rejectionReason.trimmed();
+    QLabel *notesTitle = new QLabel("Rejection Reason:", infoFrame);
+    notesTitle->setStyleSheet("font-size: 12px; font-weight: 700; color: #9F1239; margin-top: 6px;");
+    QLabel *notesVal = new QLabel(notes, infoFrame);
+    notesVal->setStyleSheet("font-size: 13px; color: #881337; background-color: #FFFFFF; border: 1px solid #FDA4AF; border-radius: 6px; padding: 8px;");
+    notesVal->setWordWrap(true);
+
+    infoLayout->addWidget(notesTitle);
+    infoLayout->addWidget(notesVal);
+    layout->addWidget(infoFrame);
+
+    QHBoxLayout *btnLayout = new QHBoxLayout();
+    btnLayout->addStretch();
+    QPushButton *closeBtn = new QPushButton("Close", &dialog);
+    closeBtn->setCursor(Qt::PointingHandCursor);
+    closeBtn->setStyleSheet(
+        "QPushButton { background-color: #64748B; color: white; font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: 8px; border: none; }"
+        "QPushButton:hover { background-color: #475569; }"
+    );
+    connect(closeBtn, &QPushButton::clicked, &dialog, &QDialog::accept);
+    btnLayout->addWidget(closeBtn);
+    layout->addLayout(btnLayout);
+
+    dialog.exec();
 }
 
 void AdminScreen::populateTable(const QVector<Item> &items)
@@ -800,35 +1285,84 @@ void AdminScreen::applyTableFilter()
     }
 
     m_table->setRowCount(0);
+    m_table->clearSpans();
     m_recordCountLabel->setText(QString("%1 records").arg(filtered.size()));
+
+    if (filtered.isEmpty()) {
+        m_table->setRowCount(1);
+        m_table->setSpan(0, 0, 1, 8);
+        QTableWidgetItem *emptyItem = new QTableWidgetItem("📦 No items found matching the current search criteria.");
+        emptyItem->setTextAlignment(Qt::AlignCenter);
+        emptyItem->setForeground(QBrush(QColor("#64748B")));
+        QFont font = emptyItem->font();
+        font.setPointSize(11);
+        font.setItalic(true);
+        emptyItem->setFont(font);
+        emptyItem->setFlags(Qt::NoItemFlags);
+        m_table->setItem(0, 0, emptyItem);
+        m_table->setRowHeight(0, 120);
+        return;
+    }
 
     for (int row = 0; row < filtered.size(); ++row) {
         const Item &item = filtered[row];
         m_table->insertRow(row);
 
+        // 0. ID
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(item.id));
         idItem->setTextAlignment(Qt::AlignCenter);
         m_table->setItem(row, 0, idItem);
 
+        // 1. Item
         m_table->setItem(row, 1, new QTableWidgetItem(item.title));
-        m_table->setItem(row, 2, new QTableWidgetItem(item.description));
 
+        // 2. Type
         QTableWidgetItem *typeItem = new QTableWidgetItem(item.isLost() ? "🔴 Lost" : "🟢 Found");
         typeItem->setTextAlignment(Qt::AlignCenter);
-        m_table->setItem(row, 3, typeItem);
+        m_table->setItem(row, 2, typeItem);
 
-        m_table->setItem(row, 4, new QTableWidgetItem(item.location));
+        // 3. Location
+        m_table->setItem(row, 3, new QTableWidgetItem(item.location));
 
+        // 4. Status
         QTableWidgetItem *statusItem = new QTableWidgetItem(item.status.toUpper());
         statusItem->setTextAlignment(Qt::AlignCenter);
-        m_table->setItem(row, 5, statusItem);
+        m_table->setItem(row, 4, statusItem);
 
+        // 5. Reported By
         QTableWidgetItem *userItem = new QTableWidgetItem(QString("User #%1").arg(item.userId));
         userItem->setTextAlignment(Qt::AlignCenter);
-        m_table->setItem(row, 6, userItem);
+        m_table->setItem(row, 5, userItem);
 
+        // 6. Date
         QTableWidgetItem *dateItem = new QTableWidgetItem(item.createdAt);
         dateItem->setTextAlignment(Qt::AlignCenter);
-        m_table->setItem(row, 7, dateItem);
+        m_table->setItem(row, 6, dateItem);
+
+        // 7. Action: [View Details]
+        QWidget *actionWidget = new QWidget();
+        QHBoxLayout *actionLayout = new QHBoxLayout(actionWidget);
+        actionLayout->setContentsMargins(4, 4, 4, 4);
+        actionLayout->setAlignment(Qt::AlignCenter);
+
+        QPushButton *viewBtn = new QPushButton("🔍 View Details", actionWidget);
+        viewBtn->setCursor(Qt::PointingHandCursor);
+        viewBtn->setStyleSheet(
+            "QPushButton {"
+            "   background-color: " + Theme::Primary::Main + ";"
+            "   color: white;"
+            "   font-size: 11px;"
+            "   font-weight: 600;"
+            "   padding: 5px 12px;"
+            "   border-radius: 6px;"
+            "   border: none;"
+            "}"
+            "QPushButton:hover { background-color: " + Theme::Primary::Dark + "; }"
+        );
+        connect(viewBtn, &QPushButton::clicked, this, [this, item]() {
+            emit viewItemDetails(item);
+        });
+        actionLayout->addWidget(viewBtn);
+        m_table->setCellWidget(row, 7, actionWidget);
     }
 }

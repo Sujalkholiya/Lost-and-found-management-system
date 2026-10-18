@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include "../network/ImageLoader.h"
 #include "../components/Theme.h"
+#include <QDebug>
 
 AdminClaimReviewDialog::AdminClaimReviewDialog(const Claim& claim, ApiClient* apiClient, QWidget* parent)
     : QDialog(parent),
@@ -185,7 +186,7 @@ void AdminClaimReviewDialog::setupUi()
         QHBoxLayout* btns = new QHBoxLayout();
         btns->setSpacing(12);
 
-        m_rejectBtn = new QPushButton("✕ Reject Claim", actionBox);
+        m_rejectBtn = new QPushButton("Reject Claim", actionBox);
         m_rejectBtn->setCursor(Qt::PointingHandCursor);
         m_rejectBtn->setStyleSheet(
             "QPushButton {"
@@ -202,7 +203,7 @@ void AdminClaimReviewDialog::setupUi()
         connect(m_rejectBtn, &QPushButton::clicked, this, &AdminClaimReviewDialog::onRejectClicked);
         btns->addWidget(m_rejectBtn);
 
-        m_approveBtn = new QPushButton("✓ Approve Claim (Ready for Pickup)", actionBox);
+        m_approveBtn = new QPushButton("Approve Claim", actionBox);
         m_approveBtn->setCursor(Qt::PointingHandCursor);
         m_approveBtn->setStyleSheet(
             "QPushButton {"
@@ -316,27 +317,32 @@ void AdminClaimReviewDialog::onApproveClicked()
     if (!m_apiClient) return;
 
     QString pickupLoc = m_pickupLocationEdit ? m_pickupLocationEdit->text().trimmed() : "Admin Block - Room 102";
+    if (pickupLoc.isEmpty()) {
+        pickupLoc = "Admin Block - Room 102";
+    }
 
     m_approveBtn->setEnabled(false);
     m_approveBtn->setText("Approving...");
+
+    qDebug() << "APPROVE CLICKED"
+             << "Claim ID:"
+             << m_claim.id
+             << "Claim Reference:"
+             << m_claim.claimReference;
 
     m_apiClient->approveClaim(
         m_claim.id,
         pickupLoc,
         [this](const QJsonObject& res) {
             Q_UNUSED(res);
-            QMessageBox::information(
-                this,
-                "Claim Approved",
-                "Claim approved successfully!\nThe claimant's status has been updated to 'Ready for Pickup' and their digital pickup pass is active."
-            );
             emit claimUpdated();
+            emit claimApproved(m_claim.claimReference);
             accept();
         },
         [this](int code, const QString& err) {
             Q_UNUSED(code);
             m_approveBtn->setEnabled(true);
-            m_approveBtn->setText("✓ Approve Claim (Ready for Pickup)");
+            m_approveBtn->setText("Approve Claim");
             QMessageBox::critical(this, "Approval Failed", err.isEmpty() ? "Failed to approve claim." : err);
         }
     );
@@ -349,36 +355,48 @@ void AdminClaimReviewDialog::onRejectClicked()
     bool ok = false;
     QString reason = QInputDialog::getText(
         this,
-        "Reject Ownership Claim",
-        "Enter the required reason for rejecting this claim:\n(This will be visible to the student)",
+        "Reject Claim",
+        "Reason for rejection:",
         QLineEdit::Normal,
-        "Identifying features and description did not match the held physical item.",
+        "",
         &ok
     );
 
-    if (!ok || reason.trimmed().isEmpty()) {
-        if (ok) {
-            QMessageBox::warning(this, "Reason Required", "You must provide a rejection reason.");
-        }
+    if (!ok) {
+        return;
+    }
+
+    if (reason.trimmed().isEmpty()) {
+        QMessageBox::warning(this, "Reason Required", "Reason for rejection cannot be empty.");
         return;
     }
 
     if (m_rejectBtn) {
         m_rejectBtn->setEnabled(false);
+        m_rejectBtn->setText("Rejecting...");
     }
+
+    qDebug() << "REJECT CLICKED"
+             << "Claim ID:"
+             << m_claim.id
+             << "Claim Reference:"
+             << m_claim.claimReference;
 
     m_apiClient->rejectClaim(
         m_claim.id,
         reason.trimmed(),
         [this](const QJsonObject& res) {
             Q_UNUSED(res);
-            QMessageBox::information(this, "Claim Rejected", "The claim has been rejected with the recorded reason.");
             emit claimUpdated();
+            emit claimRejected(m_claim.claimReference);
             accept();
         },
         [this](int code, const QString& err) {
             Q_UNUSED(code);
-            if (m_rejectBtn) m_rejectBtn->setEnabled(true);
+            if (m_rejectBtn) {
+                m_rejectBtn->setEnabled(true);
+                m_rejectBtn->setText("Reject Claim");
+            }
             QMessageBox::critical(this, "Rejection Failed", err.isEmpty() ? "Failed to reject claim." : err);
         }
     );
@@ -396,16 +414,18 @@ void AdminClaimReviewDialog::onHandoverClicked()
     m_handoverBtn->setEnabled(false);
     m_handoverBtn->setText("Processing Handover...");
 
+    qDebug() << "HANDOVER CLICKED"
+             << "Claim ID:"
+             << m_claim.id
+             << "Claim Reference:"
+             << m_claim.claimReference;
+
     m_apiClient->handoverClaim(
         m_claim.id,
         [this](const QJsonObject& res) {
             Q_UNUSED(res);
-            QMessageBox::information(
-                this,
-                "Item Handed Over Successfully",
-                "Physical handover recorded!\nItem status in the university database is now updated to 'RETURNED'."
-            );
             emit claimUpdated();
+            emit claimHandedOver(m_claim.claimReference);
             accept();
         },
         [this](int code, const QString& err) {

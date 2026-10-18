@@ -8,6 +8,8 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QTabWidget>
+#include <QTimer>
+#include <QSet>
 #include "../network/ApiClient.h"
 #include "../components/StatCardWidget.h"
 #include "../components/ToastWidget.h"
@@ -23,19 +25,25 @@ public:
     void refreshData();
     void refreshClaims();
     void checkPermissions();
+    void switchToTab(int tabIndex);
 
 signals:
     void navigateTo(int screenIndex);
     void viewItemDetails(const Item &item);
     void showToast(const QString &message, ToastType type);
+    void tabChanged(int tabIndex);
+
+public slots:
+    void onClaimFilterBtnClicked(const QString& filter);
 
 protected:
     void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
 private slots:
     void applyTableFilter();
     void applyClaimsFilter();
-    void onClaimFilterBtnClicked(const QString& filter);
+    void pollPendingClaims();
 
 private:
     void setupUI();
@@ -43,12 +51,18 @@ private:
     void populateClaimsTable(const QVector<Claim> &claims);
     void setLoading(bool loading);
     void showError(int statusCode, const QString &errorMessage);
+    void openHandoverDialog(const Claim &claim);
+    void showRejectionReasonDialog(const Claim &claim);
 
     ApiClient *m_apiClient;
     QVector<Item> m_adminItems;
     QVector<Claim> m_adminClaims;
     ClaimStats m_claimStats;
     QString m_currentClaimsFilter;
+
+    // Header Badges
+    QLabel *m_roleBadgeLabel;
+    QLabel *m_pendingBadgeLabel;
 
     // Tabs
     QTabWidget *m_tabWidget;
@@ -59,11 +73,11 @@ private:
     StatCardWidget *m_foundCard;
     StatCardWidget *m_activeCard;
 
-    // Claims KPI Cards
+    // Claims KPI Cards (Pending Review, Approved, Handed Over, Rejected)
     StatCardWidget *m_pendingClaimsCard;
     StatCardWidget *m_approvedClaimsCard;
     StatCardWidget *m_handedOverClaimsCard;
-    StatCardWidget *m_totalClaimsCard;
+    StatCardWidget *m_rejectedClaimsCard;
 
     // Filter and Search
     QLineEdit *m_searchEdit;
@@ -91,6 +105,12 @@ private:
     // Tables
     QTableWidget *m_table;
     QTableWidget *m_claimsTable;
+
+    // Polling & Real-time Claim Monitoring
+    QTimer *m_pollTimer;
+    QSet<int> m_knownPendingClaimIds;
+    bool m_isFirstPoll;
+    bool m_isPolling;
 };
 
 #endif // ADMINSCREEN_H
