@@ -126,13 +126,12 @@ add_executable(
 # This is important for:
 # #include <bcrypt/BCrypt.hpp>
 
+
 target_include_directories(
     LostFoundBackend
     PRIVATE
     ${bcrypt_SOURCE_DIR}/include
-    C:/Users/Lenovo/anaconda3/Library/include
 )
-
 
 # ==========================================
 # LINK LIBRARIES
