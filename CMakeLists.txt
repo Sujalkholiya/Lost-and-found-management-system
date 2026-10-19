@@ -97,18 +97,7 @@ add_executable(
 )
 
 
-# ==========================================
-# INCLUDE DIRECTORIES
-# ==========================================
 
-# This is important for:
-# #include <bcrypt/BCrypt.hpp>
-
-
-target_include_directories(
-    LostFoundBackend
-    PRIVATE
-)
 
 # ==========================================
 # LINK LIBRARIES
