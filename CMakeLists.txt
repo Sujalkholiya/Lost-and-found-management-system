@@ -155,4 +155,8 @@ target_link_libraries(
 # LOST & FOUND QT GUI APPLICATION
 # ==========================================
 
-add_subdirectory(gui)
+option(BUILD_GUI "Build the Qt GUI" OFF)
+
+if(BUILD_GUI)
+    add_subdirectory(gui)
+endif()
