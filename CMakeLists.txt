@@ -71,26 +71,7 @@ find_package(SQLite3 REQUIRED)
 
 
 # ==========================================
-# BCRYPT
-# ==========================================
 
-# Required because libbcrypt uses an old
-# CMake minimum version declaration
-
-set(
-    CMAKE_POLICY_VERSION_MINIMUM
-    3.5
-    CACHE STRING ""
-    FORCE
-)
-
-FetchContent_Declare(
-    bcrypt
-    GIT_REPOSITORY https://github.com/rg3/libbcrypt.git
-    GIT_TAG master
-)
-
-FetchContent_MakeAvailable(bcrypt)
 
 
 # ==========================================
@@ -127,7 +108,6 @@ add_executable(
 target_include_directories(
     LostFoundBackend
     PRIVATE
-    ${bcrypt_SOURCE_DIR}/include
 )
 
 # ==========================================
