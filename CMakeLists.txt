@@ -63,14 +63,11 @@ FetchContent_MakeAvailable(Crow)
 # SQLITE
 # ==========================================
 
-FetchContent_Declare(
-    sqlite3
-    GIT_REPOSITORY https://github.com/sqlite/sqlite.git
-    GIT_TAG version-3.45.1
-    GIT_SHALLOW TRUE
-)
+# ==========================================
+# SQLITE
+# ==========================================
 
-FetchContent_MakeAvailable(sqlite3)
+find_package(SQLite3 REQUIRED)
 
 
 # ==========================================
@@ -140,14 +137,10 @@ target_include_directories(
 target_link_libraries(
     LostFoundBackend
     PRIVATE
-
     Crow::Crow
-    C:/Users/Lenovo/anaconda3/Library/lib/sqlite3.lib
+    SQLite::SQLite3
     asio
     bcrypt
-
-    ws2_32
-    mswsock
 )
 
 # ==========================================
