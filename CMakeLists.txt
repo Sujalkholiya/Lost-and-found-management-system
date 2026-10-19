@@ -120,7 +120,7 @@ target_link_libraries(
     Crow::Crow
     SQLite::SQLite3
     asio
-    bcrypt
+    
 )
 
 # ==========================================
