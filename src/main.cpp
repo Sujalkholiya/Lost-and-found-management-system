@@ -1,9 +1,13 @@
+
 #include <crow.h>
+#include <cstdlib>
+#include <iostream>
 
 bool connectDatabase();
 void userRoutes(crow::SimpleApp& app);
 void itemRoutes(crow::SimpleApp& app);
 void claimRoutes(crow::SimpleApp& app);
+
 int main()
 {
     if (!connectDatabase())
@@ -25,7 +29,17 @@ int main()
         }
     );
 
-    app.port(18080)
+    int port = 18080;
+
+    const char* envPort = std::getenv("PORT");
+
+    if (envPort != nullptr)
+    {
+        port = std::atoi(envPort);
+    }
+
+    app.bindaddr("0.0.0.0")
+       .port(port)
        .multithreaded()
        .run();
 
