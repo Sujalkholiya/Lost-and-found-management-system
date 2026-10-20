@@ -165,3 +165,26 @@ bool connectDatabase()
 
     return true;
 }
+
+bool promoteUserToAdmin(const char* email)
+{
+    sqlite3_stmt* stmt = nullptr;
+
+    const char* sql =
+        "UPDATE users SET role = 'admin' WHERE email = ?;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, email, -1, SQLITE_TRANSIENT);
+
+    bool success = (sqlite3_step(stmt) == SQLITE_DONE);
+
+    int changedRows = sqlite3_changes(db);
+
+    sqlite3_finalize(stmt);
+
+    return success && changedRows == 1;
+}
