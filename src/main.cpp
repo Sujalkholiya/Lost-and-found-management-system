@@ -2,6 +2,7 @@
 #include <crow.h>
 #include <cstdlib>
 #include <iostream>
+#include <string>
 
 bool connectDatabase();
 bool promoteUserToAdmin(const char* email);
