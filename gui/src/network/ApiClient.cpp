@@ -10,7 +10,7 @@
 ApiClient::ApiClient(QObject *parent)
     : QObject(parent)
     , m_manager(new QNetworkAccessManager(this))
-    , m_baseUrl("http://127.0.0.1:18080")
+    , , m_baseUrl("https://lost-and-found-management-system-s0jy.onrender.com")
 {
 }
 
