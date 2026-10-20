@@ -4,6 +4,7 @@
 #include <iostream>
 
 bool connectDatabase();
+bool promoteUserToAdmin(const char* email);
 void userRoutes(crow::SimpleApp& app);
 void itemRoutes(crow::SimpleApp& app);
 void claimRoutes(crow::SimpleApp& app);
