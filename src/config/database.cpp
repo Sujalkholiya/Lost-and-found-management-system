@@ -166,6 +166,7 @@ bool connectDatabase()
     return true;
 }
 
+
 bool promoteUserToAdmin(const char* email)
 {
     sqlite3_stmt* stmt = nullptr;
@@ -175,16 +176,35 @@ bool promoteUserToAdmin(const char* email)
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK)
     {
+        std::cerr << "SQL prepare failed: "
+                  << sqlite3_errmsg(db) << std::endl;
         return false;
     }
 
     sqlite3_bind_text(stmt, 1, email, -1, SQLITE_TRANSIENT);
 
-    bool success = (sqlite3_step(stmt) == SQLITE_DONE);
+    int result = sqlite3_step(stmt);
+
+    if (result != SQLITE_DONE)
+    {
+        std::cerr << "SQL update failed: "
+                  << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(stmt);
+        return false;
+    }
 
     int changedRows = sqlite3_changes(db);
 
     sqlite3_finalize(stmt);
 
-    return success && changedRows == 1;
+    if (changedRows != 1)
+    {
+        std::cerr << "Admin promotion affected "
+                  << changedRows
+                  << " rows. Email may not exist in this database."
+                  << std::endl;
+        return false;
+    }
+
+    return true;
 }
