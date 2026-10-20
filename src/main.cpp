@@ -17,22 +17,7 @@ int main()
         return 1;
     }
 
-        const char* adminEmail = std::getenv("ADMIN_EMAIL");
-    const char* bootstrapEnabled = std::getenv("ADMIN_BOOTSTRAP_ENABLED");
-
-    if (adminEmail != nullptr &&
-        bootstrapEnabled != nullptr &&
-        std::string(bootstrapEnabled) == "true")
-    {
-        if (promoteUserToAdmin(adminEmail))
-        {
-            std::cout << "Admin account promoted successfully." << std::endl;
-        }
-        else
-        {
-            std::cout << "Admin promotion failed. Check that the email exists." << std::endl;
-        }
-    }
+        
 
     crow::SimpleApp app;
 
