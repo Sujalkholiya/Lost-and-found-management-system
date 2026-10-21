@@ -1,7 +1,6 @@
 # 🎓 Campus Lost & Found Management System
 
 A high-performance, enterprise-grade, full-stack **100% C++** university property recovery platform. Built with a modern **Qt 6 C++ Desktop Client** and a lightweight, multi-threaded **Crow C++ REST API Microservice** backed by **SQLite3** and **BCrypt**.
-
 ---
 
 ## 📌 Table of Contents
@@ -71,7 +70,7 @@ Unlike conventional web stacks, this application is engineered strictly in **mod
 - **Granular Deletion Control**: Users can delete their own reported items; campus administrators can delete any item.
 - **Cascade File Cleanup**: Deleting an item cleans up both the database record and the associated physical photo on disk.
 - **Confirmation Guards**: Safeguarded by double-confirmation dialogs.
-
+### created a great system design which hdle lot of users
 ### 📊 Live Analytics & Dashboard
 - **Campus KPI Cards**: Real-time metrics for *Total Listed Items*, *Active Lost Items*, *Found Items*, and *Reports This Week*.
 - **Admin Claim KPI Cards**: Live counters for *Pending Review*, *Ready for Pickup*, *Handed Over*, and *Total Claims*.
